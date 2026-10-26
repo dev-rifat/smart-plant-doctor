@@ -1,0 +1,107 @@
+======================================================================
+RICELEAFDISEASEBD v3 INSPECTION - KrishiSathi AI (Phase 1)
+======================================================================
+Root: /Users/rifat/StudioProjects/plant_health/ml/data/raw/riceleafdiseasebd
+Run : 2026-10-26T12:30:29
+
+## 1) CLASS COUNTS (folders vs metadata sheet)
+  Rice Tungro      2244
+  Brown spot       2178
+  Sheath blight    1722
+  Healthy          1575
+  Blast            1326
+  Leaf smut         724
+  TOTAL            9769   (metadata: 9769)
+  extensions: {'.jpg': 9769}
+  images without a metadata row: 0 []
+  imbalance max/min: Rice Tungro 2244 / Leaf smut 724 = 3.10x
+
+## 2) IMAGE DECODE / SIZE
+  failed to decode: 0
+  sizes: {(1024, 1024): 9769}
+  modes: {'RGB': 9769}
+
+## 3) DUPLICATES
+  exact (MD5) duplicate groups: 39
+    - Blast/blast_2.jpg == Rice Tungro/Rice Tungro_5.jpg
+    - Blast/blast_50.jpg == Blast/blast_51.jpg
+    - Blast/blast_55.jpg == Blast/blast_56.jpg
+    - Brown spot/brown spot_68.jpg == Healthy/Healthy_48.jpg
+    - Brown spot/brown spot_9.jpg == Leaf smut/Leaf smut_16.jpg
+    - Healthy/Healthy_514.jpg == Healthy/Healthy_515.jpg
+    - Leaf smut/Leaf smut_12.jpg == Leaf smut/Leaf smut_13.jpg
+    - Leaf smut/Leaf smut_14.jpg == Leaf smut/Leaf smut_15.jpg
+    - Rice Tungro/Rice Tungro_1.jpg == Sheath blight/Sheath blight_3.jpg
+    - Rice Tungro/Rice Tungro_2.jpg == Sheath blight/Sheath blight_10.jpg
+  dHash distance <= 0:    142 pairs,    13 across different classes
+  dHash distance <= 2:    834 pairs,    27 across different classes
+  dHash distance <= 4:   2293 pairs,    74 across different classes
+  dHash distance <= 6:   4253 pairs,   160 across different classes
+  dHash distance <= 8:   6624 pairs,   545 across different classes
+  cross-class near-duplicates (<= 4 bits) written to near_duplicates_cross_class.csv -> open each pair and decide which label is right, or drop both
+
+## 4) SAME ORIGINAL PHOTO FILED UNDER MORE THAN ONE CLASS
+  9 original filenames appear more than once:
+    - 20250412_171432.jpg: ['Healthy_10.jpg', 'Sheath blight_75.jpg']
+    - 20250425_175502.jpg: ['Healthy_48.jpg', 'brown spot_68.jpg']
+    - 20250409_133553.jpg: ['Rice Tungro_1.jpg', 'Sheath blight_3.jpg']
+    - 20250409_134145.jpg: ['Rice Tungro_2.jpg', 'Sheath blight_10.jpg']
+    - 20250409_135036.jpg: ['Rice Tungro_3.jpg', 'Sheath blight_25.jpg']
+    - 20250409_135242.jpg: ['Rice Tungro_4.jpg', 'Sheath blight_29.jpg']
+    - 20250409_135530.jpg: ['Rice Tungro_5.jpg', 'blast_2.jpg']
+    - 20250409_135537.jpg: ['Rice Tungro_6.jpg', 'Sheath blight_35.jpg']
+    - 20250409_134835.jpg: ['Sheath blight_22.jpg', 'blast_1.jpg']
+  (filenames can collide across phones; check visually before deleting)
+
+## 5) CAPTURE-TIME BURSTS (gap <= 10s = same burst)
+  capture time parsed: 9604/9769
+  ASSUMPTION: epoch-ms and PXL_ names are UTC; other dated names are UTC+6 local time
+  distinct bursts: 2302 for 9769 images (median 2 img/burst, largest 101)
+    Blast            450 bursts
+    Brown spot       372 bursts
+    Healthy          431 bursts
+    Leaf smut        256 bursts
+    Rice Tungro      404 bursts
+    Sheath blight    389 bursts
+  bursts containing more than one class: 0
+  capture days (BD time): 13  2025-04-01 .. 2025-05-03
+  leakage groups (burst + near-dup + shared original): 2249, largest 101 images
+  -> train/val/test MUST be split by group, never image-by-image
+
+## 6) SHORTCUT RISKS (things a model could learn instead of disease)
+  original filename pattern per class (proxy for phone / transfer path):
+                         IMGyyyymmdd             PXL_         epoch_ms          unknown  yyyymmdd_hhmmss
+    Blast                 718 ( 54%)         3 (  0%)         0 (  0%)        44 (  3%)       561 ( 42%)
+    Brown spot           1560 ( 72%)         0 (  0%)         0 (  0%)        16 (  1%)       602 ( 28%)
+    Healthy               645 ( 41%)        79 (  5%)         8 (  1%)       105 (  7%)       738 ( 47%)
+    Leaf smut             409 ( 56%)         0 (  0%)         0 (  0%)         0 (  0%)       315 ( 44%)
+    Rice Tungro          1289 ( 57%)         0 (  0%)         0 (  0%)         0 (  0%)       955 ( 43%)
+    Sheath blight         237 ( 14%)         0 (  0%)         0 (  0%)         0 (  0%)      1485 ( 86%)
+  original resolution per class (top 3):
+    Blast           1600x1200: 743, 1200x1600: 535, 2448x3264: 30
+    Brown spot      1200x1600: 1395, 1600x1200: 767, 3264x2448: 7
+    Healthy         1600x1200: 870, 1200x1600: 513, 3060x4080: 91
+    Leaf smut       1600x1200: 425, 1200x1600: 299
+    Rice Tungro     1600x1200: 1267, 1200x1600: 976, 1200x1073: 1
+    Sheath blight   1600x1200: 1510, 1200x1600: 212
+  brightness / sharpness per class (mean, [p5..p95]); blur_var low = blurry:
+    Blast           brightness  116.9 [ 99.0..132.4]   blur_var   534.0 [ 223.1.. 1131.4]
+    Brown spot      brightness  114.5 [ 97.4..130.6]   blur_var   598.1 [ 260.0.. 1208.5]
+    Healthy         brightness  116.9 [ 96.5..137.8]   blur_var   498.8 [ 203.4..  965.6]
+    Leaf smut       brightness  118.4 [102.6..132.3]   blur_var   535.8 [ 245.7..  939.5]
+    Rice Tungro     brightness  114.3 [ 94.8..128.9]   blur_var   517.6 [ 220.9..  994.0]
+    Sheath blight   brightness  114.8 [ 97.7..130.2]   blur_var   431.2 [ 244.1..  814.2]
+
+## 7) YOLO LABEL FILES (README mapping: 0=Brown spot, 1=Blast, 2=Healthy, 3=Leaf smut, 4=Rice Tungro, 5=Sheath blight)
+  Blast           files  1326  boxes   4844  empty    1  bad_coords 0  class_ids {'0': 4844}   <-- README says 1
+  Brown spot      files  2178  boxes   9352  empty    0  bad_coords 0  class_ids {'1': 9352}   <-- README says 0
+  Leaf smut       files   724  boxes   1501  empty    0  bad_coords 0  class_ids {'2': 1501}   <-- README says 3
+  Rice Tungro     files  2244  boxes   3156  empty    0  bad_coords 0  class_ids {'3': 3156}   <-- README says 4
+  Sheath blight   files  1722  boxes   2607  empty    0  bad_coords 0  class_ids {'4': 2607}   <-- README says 5
+  Classification does not use these. If they are used later (detection / lesion crops),
+  remap IDs from the FOLDER name, not from the number inside the file.
+
+======================================================================
+Written: ml/reports/dataset_inspection.txt, manifest.csv, near_duplicates_cross_class.csv
+Next  : review section 3/4 pairs by eye, then share this report to plan the split.
+======================================================================

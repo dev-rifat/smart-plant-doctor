@@ -1,0 +1,29 @@
+======================================================================
+GROUP-WISE SPLIT - KrishiSathi AI (Phase 1)
+======================================================================
+manifest rows: 9769   excluded: 227
+    180  near_identical_in_other_class(dhash<=6)
+     31  duplicate_copy_same_class
+     16  identical_file_in_other_class
+  excluded per class: {'Blast': 46, 'Brown spot': 55, 'Healthy': 17, 'Leaf smut': 15, 'Rice Tungro': 43, 'Sheath blight': 51}
+
+## CHECKS
+  train vs val  : shared groups 0, shared identical files 0
+  train vs test : shared groups 0, shared identical files 0
+  val   vs test : shared groups 0, shared identical files 0
+  near-identical pairs (dhash<=4) across splits: 0
+  RESULT: PASS
+
+## CLASS COUNTS PER SPLIT
+  class                     train             val            test   total
+  Blast               897 (70.1%)     191 (14.9%)     192 (15.0%)    1280
+  Brown spot         1420 (66.9%)     328 (15.4%)     375 (17.7%)    2123
+  Healthy            1143 (73.4%)     235 (15.1%)     180 (11.6%)    1558
+  Leaf smut           518 (73.1%)     106 (15.0%)      85 (12.0%)     709
+  Rice Tungro        1620 (73.6%)     278 (12.6%)     303 (13.8%)    2201
+  Sheath blight      1180 (70.6%)     201 (12.0%)     290 (17.4%)    1671
+  ALL                6778 (71.0%)    1339 (14.0%)    1425 (14.9%)    9542
+  groups: train 1600, val 319, test 319
+
+labels.json (model output order): ['Blast', 'Brown spot', 'Healthy', 'Leaf smut', 'Rice Tungro', 'Sheath blight']
+seed: 114 (best of 100; worst class deviation 3.6 points from target)

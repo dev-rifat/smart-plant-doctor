@@ -46,3 +46,12 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# ML workspace: large/generated artifacts stay out of git
+ml/.venv/
+ml/data/raw/*
+!ml/data/raw/_docs/
+ml/data/processed/
+ml/models/
+__pycache__/
+.ipynb_checkpoints/

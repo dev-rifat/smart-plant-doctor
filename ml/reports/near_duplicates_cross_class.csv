@@ -1,0 +1,75 @@
+image_a,image_b,dhash_distance
+Blast/blast_1.jpg,Sheath blight/Sheath blight_22.jpg,0
+Blast/blast_1182.jpg,Brown spot/brown spot_1701.jpg,0
+Blast/blast_1192.jpg,Brown spot/brown spot_1812.jpg,2
+Blast/blast_2.jpg,Rice Tungro/Rice Tungro_5.jpg,0
+Blast/blast_614.jpg,Leaf smut/Leaf smut_377.jpg,4
+Blast/blast_615.jpg,Leaf smut/Leaf smut_376.jpg,4
+Blast/blast_616.jpg,Leaf smut/Leaf smut_378.jpg,3
+Blast/blast_616.jpg,Leaf smut/Leaf smut_379.jpg,4
+Blast/blast_617.jpg,Leaf smut/Leaf smut_376.jpg,2
+Blast/blast_617.jpg,Leaf smut/Leaf smut_378.jpg,4
+Blast/blast_684.jpg,Brown spot/brown spot_686.jpg,4
+Blast/blast_684.jpg,Brown spot/brown spot_687.jpg,2
+Blast/blast_726.jpg,Brown spot/brown spot_817.jpg,3
+Blast/blast_726.jpg,Brown spot/brown spot_818.jpg,3
+Blast/blast_726.jpg,Brown spot/brown spot_819.jpg,2
+Blast/blast_727.jpg,Brown spot/brown spot_817.jpg,1
+Blast/blast_727.jpg,Brown spot/brown spot_818.jpg,1
+Blast/blast_727.jpg,Brown spot/brown spot_819.jpg,0
+Blast/blast_727.jpg,Rice Tungro/Rice Tungro_1254.jpg,4
+Blast/blast_728.jpg,Brown spot/brown spot_817.jpg,4
+Blast/blast_728.jpg,Brown spot/brown spot_818.jpg,4
+Blast/blast_728.jpg,Brown spot/brown spot_819.jpg,3
+Blast/blast_798.jpg,Brown spot/brown spot_840.jpg,4
+Blast/blast_798.jpg,Brown spot/brown spot_841.jpg,3
+Blast/blast_809.jpg,Brown spot/brown spot_845.jpg,3
+Blast/blast_809.jpg,Brown spot/brown spot_848.jpg,3
+Blast/blast_829.jpg,Rice Tungro/Rice Tungro_1268.jpg,3
+Blast/blast_829.jpg,Rice Tungro/Rice Tungro_1269.jpg,4
+Blast/blast_929.jpg,Brown spot/brown spot_1001.jpg,4
+Blast/blast_929.jpg,Brown spot/brown spot_1002.jpg,3
+Blast/blast_929.jpg,Brown spot/brown spot_1003.jpg,1
+Blast/blast_933.jpg,Brown spot/brown spot_1004.jpg,2
+Blast/blast_974.jpg,Brown spot/brown spot_1174.jpg,4
+Blast/blast_975.jpg,Brown spot/brown spot_1174.jpg,3
+Brown spot/brown spot_1042.jpg,Rice Tungro/Rice Tungro_1426.jpg,3
+Brown spot/brown spot_1042.jpg,Rice Tungro/Rice Tungro_1427.jpg,4
+Brown spot/brown spot_1042.jpg,Rice Tungro/Rice Tungro_1428.jpg,2
+Brown spot/brown spot_1042.jpg,Rice Tungro/Rice Tungro_1429.jpg,4
+Brown spot/brown spot_1043.jpg,Rice Tungro/Rice Tungro_1426.jpg,1
+Brown spot/brown spot_1043.jpg,Rice Tungro/Rice Tungro_1427.jpg,4
+Brown spot/brown spot_1043.jpg,Rice Tungro/Rice Tungro_1428.jpg,2
+Brown spot/brown spot_1043.jpg,Rice Tungro/Rice Tungro_1429.jpg,2
+Brown spot/brown spot_1155.jpg,Rice Tungro/Rice Tungro_1457.jpg,1
+Brown spot/brown spot_1372.jpg,Rice Tungro/Rice Tungro_1516.jpg,4
+Brown spot/brown spot_1373.jpg,Rice Tungro/Rice Tungro_1516.jpg,3
+Brown spot/brown spot_1599.jpg,Rice Tungro/Rice Tungro_1923.jpg,3
+Brown spot/brown spot_1599.jpg,Rice Tungro/Rice Tungro_1924.jpg,2
+Brown spot/brown spot_68.jpg,Healthy/Healthy_48.jpg,0
+Brown spot/brown spot_721.jpg,Rice Tungro/Rice Tungro_1217.jpg,4
+Brown spot/brown spot_734.jpg,Rice Tungro/Rice Tungro_1223.jpg,4
+Brown spot/brown spot_817.jpg,Rice Tungro/Rice Tungro_1254.jpg,3
+Brown spot/brown spot_817.jpg,Rice Tungro/Rice Tungro_1255.jpg,4
+Brown spot/brown spot_818.jpg,Rice Tungro/Rice Tungro_1254.jpg,3
+Brown spot/brown spot_818.jpg,Rice Tungro/Rice Tungro_1255.jpg,4
+Brown spot/brown spot_819.jpg,Rice Tungro/Rice Tungro_1254.jpg,4
+Brown spot/brown spot_9.jpg,Leaf smut/Leaf smut_16.jpg,0
+Brown spot/brown spot_990.jpg,Rice Tungro/Rice Tungro_1365.jpg,3
+Healthy/Healthy_1165.jpg,Sheath blight/Sheath blight_1602.jpg,3
+Healthy/Healthy_558.jpg,Sheath blight/Sheath blight_925.jpg,4
+Leaf smut/Leaf smut_354.jpg,Sheath blight/Sheath blight_1591.jpg,3
+Rice Tungro/Rice Tungro_1.jpg,Sheath blight/Sheath blight_3.jpg,0
+Rice Tungro/Rice Tungro_1925.jpg,Sheath blight/Sheath blight_1721.jpg,4
+Rice Tungro/Rice Tungro_1925.jpg,Sheath blight/Sheath blight_1722.jpg,0
+Rice Tungro/Rice Tungro_1926.jpg,Sheath blight/Sheath blight_1721.jpg,4
+Rice Tungro/Rice Tungro_1926.jpg,Sheath blight/Sheath blight_1722.jpg,0
+Rice Tungro/Rice Tungro_1927.jpg,Sheath blight/Sheath blight_1721.jpg,3
+Rice Tungro/Rice Tungro_1927.jpg,Sheath blight/Sheath blight_1722.jpg,3
+Rice Tungro/Rice Tungro_1928.jpg,Sheath blight/Sheath blight_1720.jpg,4
+Rice Tungro/Rice Tungro_1928.jpg,Sheath blight/Sheath blight_1721.jpg,3
+Rice Tungro/Rice Tungro_1928.jpg,Sheath blight/Sheath blight_1722.jpg,3
+Rice Tungro/Rice Tungro_2.jpg,Sheath blight/Sheath blight_10.jpg,0
+Rice Tungro/Rice Tungro_3.jpg,Sheath blight/Sheath blight_25.jpg,0
+Rice Tungro/Rice Tungro_4.jpg,Sheath blight/Sheath blight_29.jpg,0
+Rice Tungro/Rice Tungro_6.jpg,Sheath blight/Sheath blight_35.jpg,0

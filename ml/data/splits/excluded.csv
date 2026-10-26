@@ -1,0 +1,228 @@
+path,class,reason
+Original images/Blast/blast_1.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_1000.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_1079.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_1081.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_1132.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_1135.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_1137.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_1182.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_1187.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_1188.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_1192.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_1212.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_1226.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_1228.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_1229.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_1235.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_1255.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_2.jpg,Blast,identical_file_in_other_class
+Original images/Blast/blast_323.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_324.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_51.jpg,Blast,duplicate_copy_same_class
+Original images/Blast/blast_56.jpg,Blast,duplicate_copy_same_class
+Original images/Blast/blast_614.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_615.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_616.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_617.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_684.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_685.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_692.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_726.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_727.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_728.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_733.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_798.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_809.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_827.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_828.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_829.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_842.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_929.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_933.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_968.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_974.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_975.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_976.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Blast/blast_980.jpg,Blast,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_1001.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_1002.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_1003.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_1004.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_1042.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_1043.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_1155.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_1156.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_1174.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_1228.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_1372.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_1373.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_1391.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_1516.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_1518.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_1543.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_1599.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_1701.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_1721.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_1722.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_1812.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_1818.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_1823.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_188.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_1899.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_1900.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_1947.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_2031.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_2037.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_2038.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_2066.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_302.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_615.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_68.jpg,Brown spot,identical_file_in_other_class
+Original images/Brown spot/brown spot_684.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_686.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_687.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_713.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_714.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_721.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_732.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_734.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_803.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_817.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_818.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_819.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_836.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_840.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_841.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_842.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_845.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_847.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_848.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Brown spot/brown spot_9.jpg,Brown spot,identical_file_in_other_class
+Original images/Brown spot/brown spot_990.jpg,Brown spot,near_identical_in_other_class(dhash<=6)
+Original images/Healthy/Healthy_1165.jpg,Healthy,near_identical_in_other_class(dhash<=6)
+Original images/Healthy/Healthy_1326.jpg,Healthy,near_identical_in_other_class(dhash<=6)
+Original images/Healthy/Healthy_1350.jpg,Healthy,near_identical_in_other_class(dhash<=6)
+Original images/Healthy/Healthy_1371.jpg,Healthy,near_identical_in_other_class(dhash<=6)
+Original images/Healthy/Healthy_141.jpg,Healthy,near_identical_in_other_class(dhash<=6)
+Original images/Healthy/Healthy_201.jpg,Healthy,near_identical_in_other_class(dhash<=6)
+Original images/Healthy/Healthy_221.jpg,Healthy,near_identical_in_other_class(dhash<=6)
+Original images/Healthy/Healthy_48.jpg,Healthy,identical_file_in_other_class
+Original images/Healthy/Healthy_515.jpg,Healthy,duplicate_copy_same_class
+Original images/Healthy/Healthy_524.jpg,Healthy,near_identical_in_other_class(dhash<=6)
+Original images/Healthy/Healthy_558.jpg,Healthy,near_identical_in_other_class(dhash<=6)
+Original images/Healthy/Healthy_590.jpg,Healthy,near_identical_in_other_class(dhash<=6)
+Original images/Healthy/Healthy_703.jpg,Healthy,near_identical_in_other_class(dhash<=6)
+Original images/Healthy/Healthy_938.jpg,Healthy,near_identical_in_other_class(dhash<=6)
+Original images/Healthy/Healthy_979.jpg,Healthy,near_identical_in_other_class(dhash<=6)
+Original images/Healthy/Healthy_980.jpg,Healthy,near_identical_in_other_class(dhash<=6)
+Original images/Healthy/Healthy_981.jpg,Healthy,near_identical_in_other_class(dhash<=6)
+Original images/Leaf smut/Leaf smut_13.jpg,Leaf smut,duplicate_copy_same_class
+Original images/Leaf smut/Leaf smut_15.jpg,Leaf smut,duplicate_copy_same_class
+Original images/Leaf smut/Leaf smut_16.jpg,Leaf smut,identical_file_in_other_class
+Original images/Leaf smut/Leaf smut_224.jpg,Leaf smut,near_identical_in_other_class(dhash<=6)
+Original images/Leaf smut/Leaf smut_354.jpg,Leaf smut,near_identical_in_other_class(dhash<=6)
+Original images/Leaf smut/Leaf smut_376.jpg,Leaf smut,near_identical_in_other_class(dhash<=6)
+Original images/Leaf smut/Leaf smut_377.jpg,Leaf smut,near_identical_in_other_class(dhash<=6)
+Original images/Leaf smut/Leaf smut_378.jpg,Leaf smut,near_identical_in_other_class(dhash<=6)
+Original images/Leaf smut/Leaf smut_379.jpg,Leaf smut,near_identical_in_other_class(dhash<=6)
+Original images/Leaf smut/Leaf smut_435.jpg,Leaf smut,near_identical_in_other_class(dhash<=6)
+Original images/Leaf smut/Leaf smut_436.jpg,Leaf smut,near_identical_in_other_class(dhash<=6)
+Original images/Leaf smut/Leaf smut_465.jpg,Leaf smut,near_identical_in_other_class(dhash<=6)
+Original images/Leaf smut/Leaf smut_479.jpg,Leaf smut,near_identical_in_other_class(dhash<=6)
+Original images/Leaf smut/Leaf smut_531.jpg,Leaf smut,near_identical_in_other_class(dhash<=6)
+Original images/Leaf smut/Leaf smut_539.jpg,Leaf smut,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1.jpg,Rice Tungro,identical_file_in_other_class
+Original images/Rice Tungro/Rice Tungro_1115.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1179.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1180.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1214.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1217.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1223.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1239.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1251.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1254.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1255.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1256.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1265.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1268.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1269.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1365.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1426.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1427.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1428.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1429.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1430.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1457.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1516.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1792.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1793.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1794.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1798.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1848.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1923.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1924.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1925.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1926.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1927.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_1928.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_2.jpg,Rice Tungro,identical_file_in_other_class
+Original images/Rice Tungro/Rice Tungro_2041.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_2089.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_2090.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_2195.jpg,Rice Tungro,near_identical_in_other_class(dhash<=6)
+Original images/Rice Tungro/Rice Tungro_3.jpg,Rice Tungro,identical_file_in_other_class
+Original images/Rice Tungro/Rice Tungro_4.jpg,Rice Tungro,identical_file_in_other_class
+Original images/Rice Tungro/Rice Tungro_5.jpg,Rice Tungro,identical_file_in_other_class
+Original images/Rice Tungro/Rice Tungro_6.jpg,Rice Tungro,identical_file_in_other_class
+Original images/Sheath blight/Sheath blight_10.jpg,Sheath blight,identical_file_in_other_class
+Original images/Sheath blight/Sheath blight_1018.jpg,Sheath blight,near_identical_in_other_class(dhash<=6)
+Original images/Sheath blight/Sheath blight_13.jpg,Sheath blight,near_identical_in_other_class(dhash<=6)
+Original images/Sheath blight/Sheath blight_1321.jpg,Sheath blight,near_identical_in_other_class(dhash<=6)
+Original images/Sheath blight/Sheath blight_1516.jpg,Sheath blight,near_identical_in_other_class(dhash<=6)
+Original images/Sheath blight/Sheath blight_1517.jpg,Sheath blight,near_identical_in_other_class(dhash<=6)
+Original images/Sheath blight/Sheath blight_1518.jpg,Sheath blight,near_identical_in_other_class(dhash<=6)
+Original images/Sheath blight/Sheath blight_1519.jpg,Sheath blight,near_identical_in_other_class(dhash<=6)
+Original images/Sheath blight/Sheath blight_1547.jpg,Sheath blight,near_identical_in_other_class(dhash<=6)
+Original images/Sheath blight/Sheath blight_1591.jpg,Sheath blight,near_identical_in_other_class(dhash<=6)
+Original images/Sheath blight/Sheath blight_1594.jpg,Sheath blight,near_identical_in_other_class(dhash<=6)
+Original images/Sheath blight/Sheath blight_1602.jpg,Sheath blight,near_identical_in_other_class(dhash<=6)
+Original images/Sheath blight/Sheath blight_1720.jpg,Sheath blight,near_identical_in_other_class(dhash<=6)
+Original images/Sheath blight/Sheath blight_1721.jpg,Sheath blight,near_identical_in_other_class(dhash<=6)
+Original images/Sheath blight/Sheath blight_1722.jpg,Sheath blight,near_identical_in_other_class(dhash<=6)
+Original images/Sheath blight/Sheath blight_180.jpg,Sheath blight,near_identical_in_other_class(dhash<=6)
+Original images/Sheath blight/Sheath blight_20.jpg,Sheath blight,duplicate_copy_same_class
+Original images/Sheath blight/Sheath blight_208.jpg,Sheath blight,duplicate_copy_same_class
+Original images/Sheath blight/Sheath blight_210.jpg,Sheath blight,duplicate_copy_same_class
+Original images/Sheath blight/Sheath blight_212.jpg,Sheath blight,duplicate_copy_same_class
+Original images/Sheath blight/Sheath blight_214.jpg,Sheath blight,duplicate_copy_same_class
+Original images/Sheath blight/Sheath blight_216.jpg,Sheath blight,duplicate_copy_same_class
+Original images/Sheath blight/Sheath blight_218.jpg,Sheath blight,duplicate_copy_same_class
+Original images/Sheath blight/Sheath blight_22.jpg,Sheath blight,near_identical_in_other_class(dhash<=6)
+Original images/Sheath blight/Sheath blight_220.jpg,Sheath blight,duplicate_copy_same_class
+Original images/Sheath blight/Sheath blight_222.jpg,Sheath blight,duplicate_copy_same_class
+Original images/Sheath blight/Sheath blight_224.jpg,Sheath blight,duplicate_copy_same_class
+Original images/Sheath blight/Sheath blight_226.jpg,Sheath blight,duplicate_copy_same_class
+Original images/Sheath blight/Sheath blight_228.jpg,Sheath blight,duplicate_copy_same_class
+Original images/Sheath blight/Sheath blight_230.jpg,Sheath blight,duplicate_copy_same_class
+Original images/Sheath blight/Sheath blight_232.jpg,Sheath blight,duplicate_copy_same_class
+Original images/Sheath blight/Sheath blight_234.jpg,Sheath blight,duplicate_copy_same_class
+Original images/Sheath blight/Sheath blight_236.jpg,Sheath blight,duplicate_copy_same_class
+Original images/Sheath blight/Sheath blight_238.jpg,Sheath blight,duplicate_copy_same_class
+Original images/Sheath blight/Sheath blight_240.jpg,Sheath blight,duplicate_copy_same_class
+Original images/Sheath blight/Sheath blight_248.jpg,Sheath blight,duplicate_copy_same_class
+Original images/Sheath blight/Sheath blight_25.jpg,Sheath blight,identical_file_in_other_class
+Original images/Sheath blight/Sheath blight_250.jpg,Sheath blight,duplicate_copy_same_class
+Original images/Sheath blight/Sheath blight_253.jpg,Sheath blight,duplicate_copy_same_class
+Original images/Sheath blight/Sheath blight_276.jpg,Sheath blight,duplicate_copy_same_class
+Original images/Sheath blight/Sheath blight_278.jpg,Sheath blight,duplicate_copy_same_class
+Original images/Sheath blight/Sheath blight_280.jpg,Sheath blight,duplicate_copy_same_class
+Original images/Sheath blight/Sheath blight_282.jpg,Sheath blight,duplicate_copy_same_class
+Original images/Sheath blight/Sheath blight_29.jpg,Sheath blight,identical_file_in_other_class
+Original images/Sheath blight/Sheath blight_3.jpg,Sheath blight,identical_file_in_other_class
+Original images/Sheath blight/Sheath blight_30.jpg,Sheath blight,near_identical_in_other_class(dhash<=6)
+Original images/Sheath blight/Sheath blight_347.jpg,Sheath blight,duplicate_copy_same_class
+Original images/Sheath blight/Sheath blight_35.jpg,Sheath blight,identical_file_in_other_class
+Original images/Sheath blight/Sheath blight_543.jpg,Sheath blight,near_identical_in_other_class(dhash<=6)
+Original images/Sheath blight/Sheath blight_578.jpg,Sheath blight,near_identical_in_other_class(dhash<=6)
+Original images/Sheath blight/Sheath blight_925.jpg,Sheath blight,near_identical_in_other_class(dhash<=6)
