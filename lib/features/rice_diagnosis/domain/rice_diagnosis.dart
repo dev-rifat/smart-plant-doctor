@@ -16,23 +16,30 @@ class RiceDiagnosis {
     required this.threshold,
     required this.photoIssues,
     required this.modelVersion,
+    this.viewsAgree = true,
   });
 
   /// All classes, highest probability first.
   final List<ClassScore> scores;
 
-  /// Below this the model is not trusted (validated: answers above it were
-  /// >= 95% correct on the validation set).
+  /// Below this the model is not trusted. With the all-views-agree rule,
+  /// answers at 0.85 were 94.9% correct on the validation set.
   final double threshold;
 
   final Set<PhotoIssue> photoIssues;
   final String modelVersion;
 
+  /// Whether every view of the photo (whole + corner crops) picked the
+  /// same class. Disagreement means the model is guessing, even if the
+  /// averaged score is high.
+  final bool viewsAgree;
+
   ClassScore get top => scores.first;
 
   /// Only a confident answer on a usable photo is shown as the likely
   /// disease; everything else asks for a better photo / an officer.
-  bool get isConfident => photoIssues.isEmpty && top.probability >= threshold;
+  bool get isConfident =>
+      photoIssues.isEmpty && viewsAgree && top.probability >= threshold;
 
   /// Other classes worth mentioning ("এটাও হতে পারে").
   List<ClassScore> get alternatives =>

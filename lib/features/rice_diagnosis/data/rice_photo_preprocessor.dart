@@ -5,10 +5,12 @@ import 'package:image/image.dart' as img;
 enum PhotoIssue { tooDark, tooBright, blurry, tooSmall }
 
 class PreparedPhoto {
-  const PreparedPhoto(this.input, this.issues);
+  const PreparedPhoto(this.views, this.issues);
 
-  /// 224×224×3 RGB, float 0-255, row-major - the model's input tensor.
-  final Float32List input;
+  /// Model inputs (224×224×3 RGB, float 0-255, row-major): the whole photo
+  /// first, then four corner crops. The answer is only trusted when all
+  /// views agree - see [RiceDiagnosis.isConfident].
+  final List<Float32List> views;
 
   /// Ways this photo differs from what the model was trained on.
   final Set<PhotoIssue> issues;
@@ -31,27 +33,75 @@ abstract final class RicePhotoPreprocessor {
   static const _minSharpness = 80.0;
   static const _minSide = 300;
 
+  // Training photos were 3:4 stretched to a square. Wider/taller photos are
+  // centre-cropped to 4:3 first: a 16:9 photo squeezed to a square made a
+  // blast photo look like 97% sheath blight.
+  static const _maxAspect = 4 / 3;
+  static const _cropFraction = 0.8;
+
   /// Pure function on bytes so it can run in `compute()`: decoding a phone
   /// photo takes far too long for the UI thread.
   static PreparedPhoto prepare(Uint8List bytes) {
     final decoded = img.decodeImage(bytes);
     if (decoded == null) throw const FormatException('Not an image');
     // Phones store rotation in EXIF; apply it so the leaf is upright.
-    final photo = img.bakeOrientation(decoded);
+    final photo = _limitAspect(img.bakeOrientation(decoded));
 
-    final cached = img.copyResize(
+    // Must match ml/scripts views(): whole + 4 corner crops at 80%.
+    final w = (photo.width * _cropFraction).floor();
+    final h = (photo.height * _cropFraction).floor();
+    final crops = [
       photo,
-      width: _cacheSize,
-      height: _cacheSize,
-      interpolation: img.Interpolation.average,
-    );
-    final small = img.copyResize(
-      cached,
-      width: inputSize,
-      height: inputSize,
-      interpolation: img.Interpolation.linear,
-    );
+      for (final x in [0, photo.width - w])
+        for (final y in [0, photo.height - h])
+          img.copyCrop(photo, x: x, y: y, width: w, height: h),
+    ];
 
+    final whole = _square(photo, _cacheSize, img.Interpolation.average);
+    return PreparedPhoto(
+      [for (final c in crops) _toInput(c)],
+      {
+        ..._checkQuality(whole),
+        if (photo.width < _minSide || photo.height < _minSide)
+          PhotoIssue.tooSmall,
+      },
+    );
+  }
+
+  static img.Image _limitAspect(img.Image p) {
+    if (p.width / p.height > _maxAspect) {
+      final w = (p.height * _maxAspect).floor();
+      return img.copyCrop(
+        p,
+        x: (p.width - w) ~/ 2,
+        y: 0,
+        width: w,
+        height: p.height,
+      );
+    }
+    if (p.height / p.width > _maxAspect) {
+      final h = (p.width * _maxAspect).floor();
+      return img.copyCrop(
+        p,
+        x: 0,
+        y: (p.height - h) ~/ 2,
+        width: p.width,
+        height: h,
+      );
+    }
+    return p;
+  }
+
+  static img.Image _square(img.Image p, int size, img.Interpolation how) =>
+      img.copyResize(p, width: size, height: size, interpolation: how);
+
+  /// 256 with area averaging, then bilinear to 224 - as in training.
+  static Float32List _toInput(img.Image view) {
+    final small = _square(
+      _square(view, _cacheSize, img.Interpolation.average),
+      inputSize,
+      img.Interpolation.linear,
+    );
     final input = Float32List(inputSize * inputSize * 3);
     var i = 0;
     for (var y = 0; y < inputSize; y++) {
@@ -62,12 +112,7 @@ abstract final class RicePhotoPreprocessor {
         input[i++] = p.b.toDouble();
       }
     }
-
-    return PreparedPhoto(input, {
-      ..._checkQuality(cached),
-      if (photo.width < _minSide || photo.height < _minSide)
-        PhotoIssue.tooSmall,
-    });
+    return input;
   }
 
   /// Same measures as `inspect_dataset.py`: mean grey level and variance of

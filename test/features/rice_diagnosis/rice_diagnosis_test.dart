@@ -24,17 +24,21 @@ final advice = RiceAdvice.fromJson(
   jsonDecode(File('assets/advice/rice_diseases_bn.json').readAsStringSync())
       as Map<String, dynamic>,
 );
-final labels = (jsonDecode(
-  File('assets/models/rice_disease_v0_1.json').readAsStringSync(),
-)['labels'] as List).cast<String>();
+final labels =
+    (jsonDecode(
+              File('assets/models/rice_disease_v0_1.json').readAsStringSync(),
+            )['labels']
+            as List)
+        .cast<String>();
 
 RiceDiagnosis diagnosis(
   Map<String, double> probs, {
   Set<PhotoIssue> issues = const {},
+  bool viewsAgree = true,
 }) => RiceDiagnosis(
-  scores: [
-    for (final l in labels) ClassScore(l, probs[l] ?? 0),
-  ]..sort((a, b) => b.probability.compareTo(a.probability)),
+  viewsAgree: viewsAgree,
+  scores: [for (final l in labels) ClassScore(l, probs[l] ?? 0)]
+    ..sort((a, b) => b.probability.compareTo(a.probability)),
   threshold: 0.91,
   photoIssues: issues,
   modelVersion: 'test',
@@ -67,8 +71,18 @@ void main() {
     });
 
     test('contains no pesticide doses', () {
-      final text = File('assets/advice/rice_diseases_bn.json').readAsStringSync();
-      for (final unit in ['গ্রাম/', 'মিলি', 'ml', 'লিটার', 'কেজি/', '/শতক', '/হেক্টর']) {
+      final text = File(
+        'assets/advice/rice_diseases_bn.json',
+      ).readAsStringSync();
+      for (final unit in [
+        'গ্রাম/',
+        'মিলি',
+        'ml',
+        'লিটার',
+        'কেজি/',
+        '/শতক',
+        '/হেক্টর',
+      ]) {
         expect(text.contains(unit), isFalse, reason: 'found "$unit"');
       }
     });
@@ -77,9 +91,13 @@ void main() {
   group('photo preprocessing', () {
     test('produces a 224x224x3 tensor of raw 0-255 values', () {
       final p = RicePhotoPreprocessor.prepare(jpeg(texture()));
-      expect(p.input.length, 224 * 224 * 3);
-      expect(p.input.reduce((a, b) => a > b ? a : b), lessThanOrEqualTo(255));
-      expect(p.input.reduce((a, b) => a > b ? a : b), greaterThan(100));
+      expect(p.views, hasLength(5));
+      expect(p.views.first.length, 224 * 224 * 3);
+      expect(
+        p.views.first.reduce((a, b) => a > b ? a : b),
+        lessThanOrEqualTo(255),
+      );
+      expect(p.views.first.reduce((a, b) => a > b ? a : b), greaterThan(100));
       expect(p.issues, isEmpty);
     });
 
@@ -89,10 +107,13 @@ void main() {
         contains(PhotoIssue.tooDark),
       );
       expect(
-        RicePhotoPreprocessor.prepare(jpeg(texture(level: 230, grey: true))).issues,
+        RicePhotoPreprocessor.prepare(
+          jpeg(texture(level: 230, grey: true)),
+        ).issues,
         contains(PhotoIssue.tooBright),
       );
-      final flat = img.Image(width: 800, height: 800)..clear(img.ColorRgb8(60, 120, 40));
+      final flat = img.Image(width: 800, height: 800)
+        ..clear(img.ColorRgb8(60, 120, 40));
       expect(
         RicePhotoPreprocessor.prepare(jpeg(flat)).issues,
         contains(PhotoIssue.blurry),
@@ -116,7 +137,10 @@ void main() {
       final d = diagnosis({'Rice Tungro': 0.97, 'Healthy': 0.02});
       expect(d.isConfident, isTrue);
       expect(DiagnosisWording.headline(d, advice), 'সম্ভাব্য রোগ: টুংরো রোগ');
-      expect(DiagnosisWording.speech(d, advice), contains('স্প্রে করে সারে না'));
+      expect(
+        DiagnosisWording.speech(d, advice),
+        contains('স্প্রে করে সারে না'),
+      );
       expect(DiagnosisWording.speech(d, advice), contains('১৬১২৩'));
     });
 
@@ -133,26 +157,39 @@ void main() {
       expect(DiagnosisWording.uncertainReason(d), 'ছবিটি ঝাপসা।');
     });
 
+    test('views that disagree are never confident, even at 97%', () {
+      // The 16:9 blast photo from the field test: whole photo said sheath
+      // blight 0.97, a corner crop said blast.
+      final d = diagnosis({'Sheath blight': 0.97}, viewsAgree: false);
+      expect(d.isConfident, isFalse);
+      expect(DiagnosisWording.headline(d, advice), 'নিশ্চিত হতে পারছি না');
+      expect(DiagnosisWording.uncertainReason(d), contains('ভিন্ন ভিন্ন রোগ'));
+    });
+
     test('healthy is not presented as a disease', () {
       final d = diagnosis({'Healthy': 0.95});
-      expect(DiagnosisWording.headline(d, advice), 'রোগের স্পষ্ট লক্ষণ দেখা যায়নি');
+      expect(
+        DiagnosisWording.headline(d, advice),
+        'রোগের স্পষ্ট লক্ষণ দেখা যায়নি',
+      );
     });
   });
 
   group('result screen', () {
-    Future<void> pump(WidgetTester tester, RiceDiagnosis d) => tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SingleChildScrollView(
-            child: DiagnosisResultView(
-              diagnosis: d,
-              advice: advice,
-              voice: _SilentVoice(),
+    Future<void> pump(WidgetTester tester, RiceDiagnosis d) =>
+        tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SingleChildScrollView(
+                child: DiagnosisResultView(
+                  diagnosis: d,
+                  advice: advice,
+                  voice: _SilentVoice(),
+                ),
+              ),
             ),
           ),
-        ),
-      ),
-    );
+        );
 
     testWidgets('confident: disease, confidence, check, actions, officer', (
       tester,

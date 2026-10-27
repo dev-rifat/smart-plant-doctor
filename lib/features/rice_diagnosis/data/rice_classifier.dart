@@ -44,21 +44,32 @@ class TfliteRiceClassifier implements RiceClassifier {
     await _load();
     final photo = await compute(RicePhotoPreprocessor.prepare, photoBytes);
 
-    // Raw float32 bytes match the [1, 224, 224, 3] input tensor directly,
-    // avoiding a 150k-element nested List.
-    final output = [List<double>.filled(_labels.length, 0)];
-    _interpreter!.run(photo.input.buffer.asUint8List(), output);
+    // Average the views; the answer only counts if every view agrees.
+    final n = _labels.length;
+    final mean = List<double>.filled(n, 0);
+    final votes = <int>{};
+    for (final view in photo.views) {
+      // Raw float32 bytes match the [1, 224, 224, 3] input tensor directly,
+      // avoiding a 150k-element nested List.
+      final output = [List<double>.filled(n, 0)];
+      _interpreter!.run(view.buffer.asUint8List(), output);
+      var best = 0;
+      for (var i = 0; i < n; i++) {
+        mean[i] += output[0][i] / photo.views.length;
+        if (output[0][i] > output[0][best]) best = i;
+      }
+      votes.add(best);
+    }
 
-    final scores = [
-      for (var i = 0; i < _labels.length; i++)
-        ClassScore(_labels[i], output[0][i]),
-    ]..sort((a, b) => b.probability.compareTo(a.probability));
+    final scores = [for (var i = 0; i < n; i++) ClassScore(_labels[i], mean[i])]
+      ..sort((a, b) => b.probability.compareTo(a.probability));
 
     return RiceDiagnosis(
       scores: scores,
       threshold: _threshold,
       photoIssues: photo.issues,
       modelVersion: _version,
+      viewsAgree: votes.length == 1,
     );
   }
 }

@@ -22,9 +22,13 @@ abstract final class DiagnosisWording {
       'দিনের আলোয়, কাছ থেকে, আক্রান্ত একটি পাতার পরিষ্কার ছবি তুলুন। হাত স্থির রাখুন।';
 
   /// Why the model won't give an answer.
-  static String uncertainReason(RiceDiagnosis d) => d.photoIssues.isNotEmpty
-      ? d.photoIssues.map(issue).join(' ')
-      : 'ছবি দেখে মডেল কোনো রোগের ব্যাপারে যথেষ্ট নিশ্চিত হতে পারছে না।';
+  static String uncertainReason(RiceDiagnosis d) {
+    if (d.photoIssues.isNotEmpty) return d.photoIssues.map(issue).join(' ');
+    if (!d.viewsAgree) {
+      return 'ছবির বিভিন্ন অংশে ভিন্ন ভিন্ন রোগের মতো লাগছে, তাই মডেল নিশ্চিত নয়।';
+    }
+    return 'ছবি দেখে মডেল কোনো রোগের ব্যাপারে যথেষ্ট নিশ্চিত হতে পারছে না।';
+  }
 
   static String headline(RiceDiagnosis d, RiceAdvice advice) {
     if (!d.isConfident) return 'নিশ্চিত হতে পারছি না';
