@@ -1,0 +1,22 @@
+======================================================================
+SPLIT v0.2 - KrishiSathi AI
+======================================================================
+RiceLeafDiseaseBD (v1 split kept): 9542   multiclass: 3068   dhanshomadhan: 889
+multiclass images near-identical to RiceLeafDiseaseBD: 0
+multiclass images near-identical to Dhan-Shomadhan: 3
+Dhan-Shomadhan images near-identical to RiceLeafDiseaseBD: 6 (dropped from the unseen-source test)
+multiclass dropped: 61 {'near_duplicate_of_Dhan-Shomadhan': 3, 'near_identical_in_other_class': 58}
+multiclass near-duplicate groups: 1550 for 3007 images (largest 101)
+multiclass split seed 19, worst class deviation 7.5 pts, groups shared across splits: 0
+
+## COUNTS (rows: class, columns: split / source)
+  train    total  8995  Blast: 897+371, Brown spot: 1420+510, Healthy: 1143+459, Leaf smut: 518, Rice Tungro: 1620+431, Sheath blight: 1180+446
+  val      total  1728  Blast: 191+65, Brown spot: 328+102, Healthy: 235+84, Leaf smut: 106, Rice Tungro: 278+61, Sheath blight: 201+77
+  test     total  1826  Blast: 192+64, Brown spot: 375+96, Healthy: 180+93, Leaf smut: 85, Rice Tungro: 303+64, Sheath blight: 290+84
+  ood_test total   883  Blast: 268, Brown spot: 139, Rice Tungro: 195, Sheath blight: 281
+
+## WHITE BACKGROUND SHARE (border pixels near-white), by source and class
+  multiclass: Blast 38%, Brown spot 77%, Healthy 45%, Rice Tungro 3%, Sheath blight 0%
+  dhanshomadhan: Blast 0%, Brown spot 0%, Rice Tungro 0%, Sheath blight 0%
+  (RiceLeafDiseaseBD is all field photos.) A class that is mostly white-background in one
+  source but not others is a shortcut risk - the v0.2 report must check accuracy per source.

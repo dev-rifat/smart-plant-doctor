@@ -44,7 +44,7 @@ if IN_COLAB:
             up = files.upload()
             REPO_DIR.mkdir(parents=True)
             subprocess.run(['unzip', '-q', next(iter(up)), '-d', str(REPO_DIR)], check=True)
-    DATA_ROOT = Path('/content/data/riceleafdiseasebd')
+    RAW_ROOT = Path('/content/data')
     from google.colab import drive
     drive.mount('/content/drive')
     OUT_ROOT = Path('/content/drive/MyDrive/krishisathi_ml')
@@ -52,10 +52,18 @@ else:
     REPO_DIR = Path.cwd()
     while not (REPO_DIR / 'ml').is_dir() and REPO_DIR != REPO_DIR.parent:
         REPO_DIR = REPO_DIR.parent
-    DATA_ROOT = REPO_DIR / 'ml/data/raw/riceleafdiseasebd'
+    RAW_ROOT = REPO_DIR / 'ml/data/raw'
     OUT_ROOT = REPO_DIR / 'ml/models'
 
-SPLITS = REPO_DIR / 'ml/data/splits'
+# v1: RiceLeafDiseaseBD only. v2: + multiclass (train/val/test) and
+# Dhan-Shomadhan as an unseen-source test (ml/scripts/make_splits_v2.py).
+DATA_VERSION = os.environ.get('DATA_VERSION', 'v2')
+if DATA_VERSION == 'v1':
+    SPLITS = REPO_DIR / 'ml/data/splits'
+    DATA_ROOT = RAW_ROOT / 'riceleafdiseasebd'  # v1 paths are relative to it
+else:
+    SPLITS = REPO_DIR / 'ml/data/splits_v2'
+    DATA_ROOT = RAW_ROOT  # v2 paths start with riceleafdiseasebd/ or external/
 MANIFEST = REPO_DIR / 'ml/reports/manifest.csv'
 RUN_DIR = OUT_ROOT / (('smoke_' if SMOKE else 'run_') + datetime.now().strftime('%Y%m%d_%H%M'))
 RUN_DIR.mkdir(parents=True, exist_ok=True)
@@ -65,15 +73,18 @@ print('out  :', RUN_DIR)
 
 # %% [markdown]
 # ## 1) ছবি ডাউনলোড
-# Phase 1-এর `download_dataset.py` ব্যবহার করে (শুধু Original images, ~3.3 GB)। Colab-এ সাধারণত কয়েক মিনিট লাগে।
-# প্রতিটি নতুন Colab session-এ আবার লাগবে, কারণ `/content` মুছে যায়।
+# `download_dataset.py` (RiceLeafDiseaseBD, ~3.3 GB) আর v2-এর জন্য `download_extra_datasets.py`
+# (multiclass + Dhan-Shomadhan, ~2.4 GB)। প্রতিটি নতুন Colab session-এ আবার লাগবে।
 
 # %%
-if not (DATA_ROOT / 'Original images').is_dir():
+rl_root = RAW_ROOT / 'riceleafdiseasebd'
+if not (rl_root / 'Original images').is_dir():
     subprocess.run([sys.executable, str(REPO_DIR / 'ml/scripts/download_dataset.py'),
-                    '--out', str(DATA_ROOT)], check=True)
-n_found = sum(1 for _ in (DATA_ROOT / 'Original images').glob('*/*.jpg'))
-print('images on disk:', n_found)
+                    '--out', str(rl_root)], check=True)
+if DATA_VERSION != 'v1' and not (RAW_ROOT / 'external/sources.csv').exists():
+    subprocess.run([sys.executable, str(REPO_DIR / 'ml/scripts/download_extra_datasets.py'),
+                    '--out', str(RAW_ROOT / 'external')], check=True)
+print('images on disk:', sum(1 for _ in RAW_ROOT.glob('**/*.*g')))
 
 # %% [markdown]
 # ## 2) Settings
@@ -85,15 +96,15 @@ import tensorflow as tf
 import keras
 from keras import layers
 
-IMG_SIZE = 224
-CACHE_SIZE = 256          # images cached at this size, then cropped/resized to IMG_SIZE
+IMG_SIZE = int(os.environ.get('IMG_SIZE', 224))
+CACHE_SIZE = IMG_SIZE * 8 // 7  # 256 for 224: cached size, then cropped/resized
 BATCH = 32
 EPOCHS_HEAD = 1 if SMOKE else 8      # backbone frozen
 EPOCHS_FINETUNE = 1 if SMOKE else 25  # whole backbone, low LR, early stopping
 LR_HEAD = 1e-3
 LR_FINETUNE = 1e-5
 SEED = 42
-MODELS = ['mobilenetv3_large', 'efficientnetb0']
+MODELS = os.environ.get('MODELS', 'mobilenetv3_large,efficientnetb0').split(',')
 
 keras.utils.set_random_seed(SEED)
 pd.set_option('display.width', 200)
@@ -122,21 +133,37 @@ def load_split(name):
 
 
 splits = {k: load_split(k) for k in ('train', 'val', 'test')}
+if (SPLITS / 'ood_test.csv').exists():
+    splits['ood_test'] = load_split('ood_test')  # unseen source, never trained on
 for k, df in splits.items():
     print(f'{k:5s} {len(df):5d} images')
 
 
+def limit_aspect(img):
+    # Same as the app (RicePhotoPreprocessor): centre-crop to at most 4:3
+    # before squaring, so wide photos aren't squeezed.
+    h = tf.cast(tf.shape(img)[0], tf.float32)
+    w = tf.cast(tf.shape(img)[1], tf.float32)
+    nw = tf.cast(tf.floor(tf.minimum(w, h * 4 / 3)), tf.int32)
+    nh = tf.cast(tf.floor(tf.minimum(h, w * 4 / 3)), tf.int32)
+    oy = (tf.shape(img)[0] - nh) // 2
+    ox = (tf.shape(img)[1] - nw) // 2
+    return img[oy:oy + nh, ox:ox + nw, :]
+
+
 def decode(path, label):
-    img = tf.io.decode_jpeg(tf.io.read_file(path), channels=3)
-    img = tf.image.resize(img, (CACHE_SIZE, CACHE_SIZE), antialias=True)
+    # decode_image handles the PNGs in the external data too.
+    img = tf.io.decode_image(tf.io.read_file(path), channels=3, expand_animations=False)
+    img = tf.image.resize(limit_aspect(img), (CACHE_SIZE, CACHE_SIZE), antialias=True)
     return tf.cast(tf.round(img), tf.uint8), label
 
 
 def augment(img, label):
     img = tf.cast(img, tf.float32)
-    # random aspect ratio: crop each side independently to 75-100%, then stretch back
-    h = tf.cast(tf.random.uniform([], 0.75, 1.0) * CACHE_SIZE, tf.int32)
-    w = tf.cast(tf.random.uniform([], 0.75, 1.0) * CACHE_SIZE, tf.int32)
+    # Random zoom + aspect: crop each side to 55-100% (30-100% of the area),
+    # then stretch back. Covers close-ups like web photos of a few lesions.
+    h = tf.cast(tf.random.uniform([], 0.55, 1.0) * CACHE_SIZE, tf.int32)
+    w = tf.cast(tf.random.uniform([], 0.55, 1.0) * CACHE_SIZE, tf.int32)
     img = tf.image.random_crop(img, tf.stack([h, w, 3]))
     img = tf.image.resize(img, (IMG_SIZE, IMG_SIZE))
     img = tf.image.random_flip_left_right(img)
@@ -260,10 +287,57 @@ def ece(probs, y, bins=10):
     return float(total)
 
 
+from PIL import Image
+
 manifest = pd.read_csv(MANIFEST)[['path', 'filename_pattern']]
+manifest['path'] = ('riceleafdiseasebd/' if DATA_VERSION != 'v1' else '') + manifest['path']
 val_df = splits['val'].merge(manifest, on='path', how='left')
+# Phone pattern for RiceLeafDiseaseBD rows, the dataset name for the rest.
+val_df['filename_pattern'] = val_df['filename_pattern'].fillna(
+    val_df['source'] if 'source' in val_df else 'unknown')
 y_val = val_df['label'].values
 results = {}
+
+
+def five_view_logits(model, files):
+    """The app's decision input (RicePhotoPreprocessor): crop to <= 4:3,
+    then whole + 4 corner crops at 80%, each 256 (area) -> IMG_SIZE."""
+    out = []
+    for f in files:
+        im = Image.open(f).convert('RGB')
+        w, h = im.size
+        if w / h > 4 / 3:
+            nw = int(h * 4 / 3); im = im.crop(((w - nw) // 2, 0, (w - nw) // 2 + nw, h))
+        elif h / w > 4 / 3:
+            nh = int(w * 4 / 3); im = im.crop((0, (h - nh) // 2, w, (h - nh) // 2 + nh))
+        w, h = im.size
+        cw, ch = int(w * 0.8), int(h * 0.8)
+        views = [im] + [im.crop((x, y, x + cw, y + ch)) for x in (0, w - cw) for y in (0, h - ch)]
+        batch = np.stack([
+            tf.image.resize(tf.cast(tf.round(tf.image.resize(np.asarray(v), (CACHE_SIZE, CACHE_SIZE),
+                                                             antialias=True)), tf.uint8),
+                            (IMG_SIZE, IMG_SIZE)).numpy()
+            for v in views])
+        out.append(model.predict(batch, verbose=0))
+    return np.stack(out)  # [n, 5, classes]
+
+
+def five_view_decision(view_logits, t):
+    probs = np.stack([softmax(v, t) for v in view_logits])  # [n, 5, c]
+    mean = probs.mean(1)
+    agree = (probs.argmax(2) == mean.argmax(1)[:, None]).all(1)
+    return mean, agree
+
+
+def app_threshold(mean, agree, y):
+    """Smallest cut where confident answers (all views agree, mean >= cut)
+    are >= 95% correct on validation - the app's rule."""
+    pred = mean.argmax(1)
+    for th in np.round(np.arange(0.50, 0.991, 0.01), 2):
+        m = agree & (mean.max(1) >= th)
+        if m.sum() >= 20 and (pred[m] == y[m]).mean() >= 0.95:
+            return float(th), float(m.mean())
+    return None, 0.0
 
 for name, model in trained.items():
     logits = model.predict(val_ds, verbose=0)
@@ -307,6 +381,34 @@ for name, model in trained.items():
     }
     print(f'temperature {best_t:.2f} | ECE {results[name]["ece_before"]:.3f} -> {results[name]["ece_after"]:.3f}'
           f' | threshold {threshold} answers {coverage:.0%} of val images at >=95% accuracy')
+
+    # The app's rule: 5 views must agree. Threshold chosen on validation only.
+    v_mean, v_agree = five_view_decision(five_view_logits(model, val_df['file']), best_t)
+    app_th, app_cov = app_threshold(v_mean, v_agree, y_val)
+    results[name]['app_rule'] = {
+        'threshold': app_th, 'val_coverage': app_cov,
+        'val_accuracy_5view': float((v_mean.argmax(1) == y_val).mean()),
+    }
+    print(f'app rule (5 views agree): threshold {app_th}, answers {app_cov:.0%} of val at >=95%,'
+          f' 5-view accuracy {results[name]["app_rule"]["val_accuracy_5view"]:.3f}')
+
+    # Unseen source (never trained on, not used to choose anything).
+    if 'ood_test' in splits:
+        odf = splits['ood_test']
+        y_o = odf['label'].values
+        o_mean, o_agree = five_view_decision(five_view_logits(model, odf['file']), best_t)
+        o_pred = o_mean.argmax(1)
+        m = o_agree & (o_mean.max(1) >= (app_th or 1.0))
+        results[name]['unseen_source'] = {
+            'images': int(len(odf)),
+            'accuracy_5view': float((o_pred == y_o).mean()),
+            'macro_f1_5view': float(f1_score(y_o, o_pred, average='macro')),
+            'answered': float(m.mean()),
+            'accuracy_when_answered': float((o_pred[m] == y_o[m]).mean()) if m.any() else None,
+        }
+        print(f'UNSEEN SOURCE ({len(odf)} imgs): {results[name]["unseen_source"]}')
+        print(classification_report(y_o, o_pred, labels=range(N_CLASSES), target_names=CLASS_NAMES,
+                                    digits=3, zero_division=0))
 
     cm = confusion_matrix(y_val, pred, labels=range(N_CLASSES))
     fig, ax = plt.subplots(figsize=(7, 6))
@@ -388,7 +490,8 @@ for name, model in trained.items():
 
 # %% [markdown]
 # ## 7) তুলনা ও সংরক্ষণ
-# বাছাইয়ের নিয়ম: validation macro-F1 বেশি যেটির; ১ পয়েন্টের কম পার্থক্য হলে ছোট ও দ্রুত মডেল।
+# বাছাইয়ের নিয়ম: অ্যাপের নিয়মে (৫ view একমত) validation-এর যত বেশি ছবিতে ≥৯৫% সঠিক উত্তর দেয়;
+# ২ পয়েন্টের কম পার্থক্য হলে ছোট মডেল। Unseen-source test শুধু রিপোর্ট, বাছাইয়ে ব্যবহার হয় না।
 
 # %%
 summary = pd.DataFrame({
@@ -399,13 +502,19 @@ summary = pd.DataFrame({
         'fp16_MB': r['tflite']['float16']['size_mb'],
         'int8w_MB': r['tflite']['dynamic_int8']['size_mb'],
         'int8w_agree': r['tflite']['dynamic_int8']['top1_agreement_with_keras'],
+        'app_threshold': r['app_rule']['threshold'],
+        'app_val_coverage': r['app_rule']['val_coverage'],
+        'unseen_acc_5view': (r.get('unseen_source') or {}).get('accuracy_5view'),
     } for n, r in results.items()
-}).T.round(3)
-print(summary)
+}).T
+print(summary.round(3))
 
-best_f1 = summary['val_macro_f1'].max()
-close = summary[summary['val_macro_f1'] >= best_f1 - 0.01]
-chosen = close['params_M'].idxmin()
+# Choose by what the farmer gets: the share of validation photos answered
+# at >= 95% correctness under the app's rule. Within 2 points, the smaller
+# model. The unseen-source test is reported only, never used to choose.
+best_cov = summary['app_val_coverage'].max()
+close = summary[summary['app_val_coverage'] >= best_cov - 0.02]
+chosen = close['params_M'].astype(float).idxmin()
 print('\nchosen model:', chosen)
 
 model_card = {
@@ -416,7 +525,10 @@ model_card = {
               'range': '0-255', 'preprocessing': 'resize the whole photo to 224x224, no crop, no normalisation'},
     'output': 'calibrated probabilities (softmax(logits / temperature)), same order as labels',
     'temperature': results[chosen]['temperature'],
-    'uncertain_threshold': results[chosen]['uncertain_threshold'],
+    'uncertain_threshold': results[chosen]['app_rule']['threshold'],
+    'decision': {'views': 5, 'crop_fraction': 0.8, 'max_aspect': round(4 / 3, 4),
+                 'requires_all_views_agree': True},
+    'unseen_source_test': results[chosen].get('unseen_source'),
     'validation': {k: v for k, v in results[chosen].items() if k != 'tflite'},
     'tflite': results[chosen]['tflite'],
     'dataset': {'name': 'RiceLeafDiseaseBD v3', 'doi': '10.17632/86s4jzj2m4.3', 'license': 'CC BY 4.0',
