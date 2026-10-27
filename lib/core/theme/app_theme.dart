@@ -58,10 +58,7 @@ class AppTheme {
           ),
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          textStyle: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-          ),
+          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -73,10 +70,7 @@ class AppTheme {
           ),
           backgroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          textStyle: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-          ),
+          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
         ),
       ),
       textTheme: const TextTheme(
@@ -164,8 +158,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide:
-              const BorderSide(color: AppColors.primaryLight, width: 2),
+          borderSide: const BorderSide(color: AppColors.primaryLight, width: 2),
         ),
         labelStyle: const TextStyle(color: Color(0xFFB8C8BA)),
       ),
@@ -216,18 +209,9 @@ class AppTheme {
           fontWeight: FontWeight.w600,
           color: Color(0xFFE6F2E8),
         ),
-        bodyLarge: TextStyle(
-          fontSize: 16,
-          color: Color(0xFFDDEBDF),
-        ),
-        bodyMedium: TextStyle(
-          fontSize: 14,
-          color: Color(0xFFC6D7C8),
-        ),
-        bodySmall: TextStyle(
-          fontSize: 12,
-          color: Color(0xFFA9BEAC),
-        ),
+        bodyLarge: TextStyle(fontSize: 16, color: Color(0xFFDDEBDF)),
+        bodyMedium: TextStyle(fontSize: 14, color: Color(0xFFC6D7C8)),
+        bodySmall: TextStyle(fontSize: 12, color: Color(0xFFA9BEAC)),
       ),
       dividerColor: const Color(0xFF2A3A30),
       splashColor: Colors.white10,

@@ -191,7 +191,7 @@ def build_model(name):
         raise ValueError(name)
     base.trainable = False
     inp = keras.Input(shape, name='image')
-    x = base(inp, training=False)  # BatchNorm stays in inference mode, also while fine-tuning
+    x = base(inp, training=False)
     x = layers.Dropout(0.3)(x)
     out = layers.Dense(N_CLASSES, name='logits')(x)
     return keras.Model(inp, out, name=name), base
@@ -202,7 +202,7 @@ def train(name):
     loss = keras.losses.SparseCategoricalCrossentropy(from_logits=True)
     ckpt = RUN_DIR / f'{name}_best.keras'
     callbacks = [
-        keras.callbacks.EarlyStopping(monitor='val_loss', patience=4, restore_best_weights=True),
+        keras.callbacks.EarlyStopping(monitor='val_loss', patience=6, restore_best_weights=True),
         keras.callbacks.ModelCheckpoint(str(ckpt), monitor='val_loss', save_best_only=True),
         keras.callbacks.CSVLogger(str(RUN_DIR / f'{name}_history.csv'), append=True),
     ]
@@ -211,6 +211,11 @@ def train(name):
     model.fit(train_ds, validation_data=val_ds, epochs=EPOCHS_HEAD,
               class_weight=class_weight, callbacks=callbacks, verbose=2)
     base.trainable = True
+    # Keras 3 ignores training=False on the nested base once it is trainable: BatchNorm
+    # statistics drifted even at LR 0 and train loss doubled. Freeze BN explicitly.
+    for layer in base.layers:
+        if isinstance(layer, layers.BatchNormalization):
+            layer.trainable = False
     model.compile(optimizer=keras.optimizers.Adam(LR_FINETUNE), loss=loss, metrics=['accuracy'])
     model.fit(train_ds, validation_data=val_ds, epochs=EPOCHS_FINETUNE,
               class_weight=class_weight, callbacks=callbacks, verbose=2)

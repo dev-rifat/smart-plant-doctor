@@ -5,7 +5,8 @@ import 'package:plant_health/features/plant_detection/presentation/bloc/plant_de
 import 'package:plant_health/features/plant_detection/presentation/bloc/plant_detection_state.dart';
 
 /// BLoC for plant detection
-class PlantDetectionBloc extends Bloc<PlantDetectionEvent, PlantDetectionState> {
+class PlantDetectionBloc
+    extends Bloc<PlantDetectionEvent, PlantDetectionState> {
   final AnalyzePlantImageUseCase analyzePlantImageUseCase;
   final ImagePicker imagePicker;
 

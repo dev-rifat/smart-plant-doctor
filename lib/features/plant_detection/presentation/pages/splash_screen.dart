@@ -62,30 +62,20 @@ class _SplashScreenState extends State<SplashScreen>
   void _handleLogin() => _navigate(AppRouter.login);
 
   ButtonStyle get _buttonStyle => ElevatedButton.styleFrom(
-        backgroundColor: _primaryColor,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 15),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
-        textStyle: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w700,
-        ),
-      );
+    backgroundColor: _primaryColor,
+    foregroundColor: Colors.white,
+    padding: const EdgeInsets.symmetric(vertical: 15),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+    textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+  );
 
   ButtonStyle get _outlineButtonStyle => OutlinedButton.styleFrom(
-        foregroundColor: _primaryColor,
-        side: const BorderSide(color: _primaryColor, width: 1.5),
-        padding: const EdgeInsets.symmetric(vertical: 15),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
-        textStyle: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
-      );
+    foregroundColor: _primaryColor,
+    side: const BorderSide(color: _primaryColor, width: 1.5),
+    padding: const EdgeInsets.symmetric(vertical: 15),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+    textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -96,9 +86,7 @@ class _SplashScreenState extends State<SplashScreen>
     return Scaffold(
       body: Stack(
         children: [
-          const Positioned.fill(
-            child: _FarmImage(),
-          ),
+          const Positioned.fill(child: _FarmImage()),
 
           Positioned.fill(
             child: Container(
@@ -134,12 +122,7 @@ class _SplashScreenState extends State<SplashScreen>
               opacity: _fadeAnimation,
               child: Container(
                 width: double.infinity,
-                padding: EdgeInsets.fromLTRB(
-                  24,
-                  28,
-                  24,
-                  bottomPadding + 28,
-                ),
+                padding: EdgeInsets.fromLTRB(24, 28, 24, bottomPadding + 28),
                 decoration: BoxDecoration(
                   color: _isLoggedIn ? Colors.transparent : Colors.white,
                   borderRadius: const BorderRadius.vertical(
@@ -209,10 +192,7 @@ class _HeaderSection extends StatelessWidget {
         SizedBox(height: 10),
         Text(
           'AI-চালিত ফসল বিশ্লেষণ ও রোগ নির্ণয়',
-          style: TextStyle(
-            fontSize: 14,
-            color: Color(0xCCE8F5E9),
-          ),
+          style: TextStyle(fontSize: 14, color: Color(0xCCE8F5E9)),
         ),
       ],
     );
@@ -231,11 +211,7 @@ class _LogoBox extends StatelessWidget {
         color: Color(0xFF3F8D46),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: const Icon(
-        Icons.eco_rounded,
-        color: Colors.white,
-        size: 26,
-      ),
+      child: const Icon(Icons.eco_rounded, color: Colors.white, size: 26),
     );
   }
 }
@@ -259,10 +235,7 @@ class _BottomTextSection extends StatelessWidget {
         SizedBox(height: 6),
         Text(
           'ছবি তুলুন, রোগ চিহ্নিত করুন,\nবিশেষজ্ঞ পরামর্শ নিন।',
-          style: TextStyle(
-            fontSize: 13,
-            color: Color(0xFF4A7C59),
-          ),
+          style: TextStyle(fontSize: 13, color: Color(0xFF4A7C59)),
           textAlign: TextAlign.center,
         ),
       ],
@@ -277,7 +250,6 @@ class _LoaderSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Column(
       children: [
-       
         SizedBox(
           width: 34,
           height: 34,
@@ -297,7 +269,7 @@ class _FarmImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Image.asset(
-        'assets/images/splash_img.jpg',
+      'assets/images/splash_img.jpg',
       fit: BoxFit.cover,
       width: double.infinity,
       height: double.infinity,
@@ -307,10 +279,7 @@ class _FarmImage extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                Color(0xFF1B5E20),
-                Color(0xFF4CAF50),
-              ],
+              colors: [Color(0xFF1B5E20), Color(0xFF4CAF50)],
             ),
           ),
           child: const Center(

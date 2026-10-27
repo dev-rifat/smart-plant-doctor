@@ -31,6 +31,11 @@ target 'Runner' do
   use_frameworks!
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+
+  # Precompiled Firestore: without this, Xcode compiles Firestore's C++ core
+  # (gRPC, abseil, BoringSSL) from source, adding 5–15 min to every clean
+  # build. The tag must match the FirebaseFirestore version in Podfile.lock.
+  pod 'FirebaseFirestore', :git => 'https://github.com/invertase/firestore-ios-sdk-frameworks.git', :tag => '11.15.0'
   target 'RunnerTests' do
     inherit! :search_paths
   end

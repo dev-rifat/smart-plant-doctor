@@ -33,24 +33,22 @@ class _ProfilePageState extends State<ProfilePage> {
     return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state is AuthFailure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.message)));
         }
 
         if (state is AuthLoggedOut) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
-              AppRouter.login,
-              (route) => false,
-            );
+            Navigator.of(
+              context,
+              rootNavigator: true,
+            ).pushNamedAndRemoveUntil(AppRouter.login, (route) => false);
           });
         }
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('প্রোফাইল'),
-        ),
+        appBar: AppBar(title: const Text('প্রোফাইল')),
         body: Container(
           width: double.infinity,
           decoration: const BoxDecoration(
@@ -89,9 +87,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               Text(
                                 displayName,
                                 textAlign: TextAlign.center,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleLarge
+                                style: Theme.of(context).textTheme.titleLarge
                                     ?.copyWith(fontWeight: FontWeight.w700),
                               ),
                               const SizedBox(height: 4),
@@ -193,10 +189,7 @@ class _ProfilePageState extends State<ProfilePage> {
               Navigator.pop(dialogContext);
               context.read<AuthCubit>().logout();
             },
-            child: const Text(
-              'লগআউট',
-              style: TextStyle(color: Colors.red),
-            ),
+            child: const Text('লগআউট', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -235,17 +228,17 @@ class _ProfileInfoTile extends StatelessWidget {
                 Text(
                   title,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF5E7A64),
-                        fontWeight: FontWeight.w600,
-                      ),
+                    color: const Color(0xFF5E7A64),
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   value,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: const Color(0xFF1E4926),
-                        fontWeight: FontWeight.w600,
-                      ),
+                    color: const Color(0xFF1E4926),
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),

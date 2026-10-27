@@ -8,10 +8,7 @@ import 'package:plant_health/features/plant_detection/presentation/bloc/plant_de
 import 'package:plant_health/features/plant_detection/presentation/widgets/result_card.dart';
 
 class PlantDetectionResultPage extends StatelessWidget {
-  const PlantDetectionResultPage({
-    super.key,
-    required this.result,
-  });
+  const PlantDetectionResultPage({super.key, required this.result});
 
   final PlantAnalysisResult result;
 
@@ -68,8 +65,8 @@ class PlantDetectionResultPage extends StatelessWidget {
                             icon: Icons.arrow_back_ios_new_rounded,
                             onTap: () {
                               context.read<PlantDetectionBloc>().add(
-                                    ReturnToImagePreviewEvent(result.imageUrl),
-                                  );
+                                ReturnToImagePreviewEvent(result.imageUrl),
+                              );
                               Navigator.of(context).pop();
                             },
                           ),
@@ -80,9 +77,9 @@ class PlantDetectionResultPage extends StatelessWidget {
                           child: _overlayIconButton(
                             icon: Icons.close_rounded,
                             onTap: () {
-                              context
-                                  .read<PlantDetectionBloc>()
-                                  .add(const ResetPlantDetectionEvent());
+                              context.read<PlantDetectionBloc>().add(
+                                const ResetPlantDetectionEvent(),
+                              );
                               Navigator.of(context).pop();
                             },
                           ),
@@ -103,8 +100,8 @@ class PlantDetectionResultPage extends StatelessWidget {
                     severity: result.severity,
                     onScanAgain: () {
                       context.read<PlantDetectionBloc>().add(
-                            ReturnToImagePreviewEvent(result.imageUrl),
-                          );
+                        ReturnToImagePreviewEvent(result.imageUrl),
+                      );
                       Navigator.of(context).pop();
                     },
                   ),

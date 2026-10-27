@@ -30,9 +30,9 @@ class _SignupPageState extends State<SignupPage> {
     return BlocConsumer<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state is AuthFailure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.message)));
         }
 
         if (state is AuthSuccess) {
@@ -50,7 +50,10 @@ class _SignupPageState extends State<SignupPage> {
           body: Stack(
             children: [
               Positioned.fill(
-                child: Image.asset('assets/images/auth_img.jpg', fit: BoxFit.cover),
+                child: Image.asset(
+                  'assets/images/auth_img.jpg',
+                  fit: BoxFit.cover,
+                ),
               ),
               Positioned.fill(
                 child: Container(
@@ -69,7 +72,10 @@ class _SignupPageState extends State<SignupPage> {
               ),
               SafeArea(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
                   child: Row(
                     children: [
                       Container(
@@ -79,7 +85,11 @@ class _SignupPageState extends State<SignupPage> {
                           color: const Color(0xFF3F8D46),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(Icons.eco_rounded, color: Colors.white, size: 22),
+                        child: const Icon(
+                          Icons.eco_rounded,
+                          color: Colors.white,
+                          size: 22,
+                        ),
                       ),
                       const SizedBox(width: 10),
                       const Text(
@@ -100,12 +110,16 @@ class _SignupPageState extends State<SignupPage> {
                   child: Container(
                     width: double.infinity,
                     padding: EdgeInsets.fromLTRB(
-                      24, 28, 24,
+                      24,
+                      28,
+                      24,
                       MediaQuery.of(context).padding.bottom + 24,
                     ),
                     decoration: const BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(32),
+                      ),
                     ),
                     child: Form(
                       key: _formKey,
@@ -116,10 +130,11 @@ class _SignupPageState extends State<SignupPage> {
                           Text(
                             'সাইনআপ করুন',
                             textAlign: TextAlign.center,
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineSmall
-                                ?.copyWith(fontWeight: FontWeight.w700, color: const Color(0xFF1E4926)),
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF1E4926),
+                                ),
                           ),
                           const SizedBox(height: 20),
                           TextFormField(
@@ -172,8 +187,10 @@ class _SignupPageState extends State<SignupPage> {
                                 : () {
                                     if (_formKey.currentState!.validate()) {
                                       context.read<AuthCubit>().signup(
-                                        userName: _userNameController.text.trim(),
-                                        phoneNumber: _phoneController.text.trim(),
+                                        userName: _userNameController.text
+                                            .trim(),
+                                        phoneNumber: _phoneController.text
+                                            .trim(),
                                         password: _passwordController.text,
                                       );
                                     }
@@ -182,13 +199,18 @@ class _SignupPageState extends State<SignupPage> {
                                 ? const SizedBox(
                                     width: 20,
                                     height: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
                                   )
                                 : const Text('সাইনআপ'),
                           ),
                           const SizedBox(height: 12),
                           OutlinedButton(
-                            onPressed: isLoading ? null : () => Navigator.pop(context),
+                            onPressed: isLoading
+                                ? null
+                                : () => Navigator.pop(context),
                             child: const Text('লগইন-এ ফিরে যান'),
                           ),
                         ],

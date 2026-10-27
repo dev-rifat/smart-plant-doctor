@@ -15,12 +15,17 @@ class NavigationService {
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
   Future<dynamic> navigateTo(String routeName, {Object? arguments}) {
-    return navigatorKey.currentState!.pushNamed(routeName, arguments: arguments);
+    return navigatorKey.currentState!.pushNamed(
+      routeName,
+      arguments: arguments,
+    );
   }
 
   Future<dynamic> navigateToAndReplace(String routeName, {Object? arguments}) {
-    return navigatorKey.currentState!
-        .pushReplacementNamed(routeName, arguments: arguments);
+    return navigatorKey.currentState!.pushReplacementNamed(
+      routeName,
+      arguments: arguments,
+    );
   }
 
   Future<dynamic> navigateToAndRemoveUntil(
@@ -28,8 +33,11 @@ class NavigationService {
     required RoutePredicate predicate,
     Object? arguments,
   }) {
-    return navigatorKey.currentState!
-        .pushNamedAndRemoveUntil(routeName, predicate, arguments: arguments);
+    return navigatorKey.currentState!.pushNamedAndRemoveUntil(
+      routeName,
+      predicate,
+      arguments: arguments,
+    );
   }
 
   void goBack() {

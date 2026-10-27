@@ -21,10 +21,7 @@ class PlantDetectionPage extends StatelessWidget {
         return Scaffold(
           appBar: isSuccess
               ? null
-              : AppBar(
-                  elevation: 0,
-                  title: const Text(AppStrings.appName),
-                ),
+              : AppBar(elevation: 0, title: const Text(AppStrings.appName)),
           body: Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -87,9 +84,9 @@ class PlantDetectionPage extends StatelessWidget {
             children: [
               Text(
                 'Capture leaf image',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 6),
               Text(
@@ -102,21 +99,27 @@ class PlantDetectionPage extends StatelessWidget {
                 runSpacing: 8,
                 children: const [
                   _FeatureChip(icon: Icons.auto_awesome, label: 'AI diagnosis'),
-                  _FeatureChip(icon: Icons.medication_rounded, label: 'Medicine plan'),
-                  _FeatureChip(icon: Icons.timeline_rounded, label: 'Recovery timeline'),
+                  _FeatureChip(
+                    icon: Icons.medication_rounded,
+                    label: 'Medicine plan',
+                  ),
+                  _FeatureChip(
+                    icon: Icons.timeline_rounded,
+                    label: 'Recovery timeline',
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
               ImageActionButtons(
                 onCameraPressed: () {
-                  context
-                      .read<PlantDetectionBloc>()
-                      .add(const CaptureImageFromCameraEvent());
+                  context.read<PlantDetectionBloc>().add(
+                    const CaptureImageFromCameraEvent(),
+                  );
                 },
                 onGalleryPressed: () {
-                  context
-                      .read<PlantDetectionBloc>()
-                      .add(const PickImageFromGalleryEvent());
+                  context.read<PlantDetectionBloc>().add(
+                    const PickImageFromGalleryEvent(),
+                  );
                 },
               ),
             ],
@@ -127,10 +130,7 @@ class PlantDetectionPage extends StatelessWidget {
   }
 
   /// Image picked state - show image and analyze button
-  Widget _buildImagePickedState(
-    BuildContext context,
-    ImagePickedState state,
-  ) {
+  Widget _buildImagePickedState(BuildContext context, ImagePickedState state) {
     return Column(
       children: [
         _buildHeroBanner(context),
@@ -151,10 +151,7 @@ class PlantDetectionPage extends StatelessWidget {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(20),
-            child: Image.file(
-              File(state.imagePath),
-              fit: BoxFit.cover,
-            ),
+            child: Image.file(File(state.imagePath), fit: BoxFit.cover),
           ),
         ),
         const SizedBox(height: 18),
@@ -169,17 +166,17 @@ class PlantDetectionPage extends StatelessWidget {
           child: Text(
             'ছবিটি প্রস্তুত। এখন বিশ্লেষণ করুন।',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF1B5E20),
-                  fontWeight: FontWeight.w600,
-                ),
+              color: const Color(0xFF1B5E20),
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
         const SizedBox(height: 16),
         ElevatedButton.icon(
           onPressed: () {
             context.read<PlantDetectionBloc>().add(
-                  AnalyzePlantImageEvent(state.imagePath),
-                );
+              AnalyzePlantImageEvent(state.imagePath),
+            );
           },
           icon: const Icon(Icons.analytics_rounded),
           label: const Text('বিশ্লেষণ করুন / Analyze'),
@@ -193,9 +190,9 @@ class PlantDetectionPage extends StatelessWidget {
         const SizedBox(height: 12),
         OutlinedButton.icon(
           onPressed: () {
-            context
-                .read<PlantDetectionBloc>()
-                .add(const ResetPlantDetectionEvent());
+            context.read<PlantDetectionBloc>().add(
+              const ResetPlantDetectionEvent(),
+            );
           },
           icon: const Icon(Icons.clear),
           label: const Text('বাতিল করুন / Cancel'),
@@ -227,36 +224,33 @@ class PlantDetectionPage extends StatelessWidget {
         ],
       ),
       child: Column(
-      children: [
-        const SizedBox(height: 20),
-        const SizedBox(
-          width: 44,
-          height: 44,
-          child: CircularProgressIndicator(strokeWidth: 3.2),
-        ),
-        const SizedBox(height: 24),
-        Text(
-          'আপনার ফসল বিশ্লেষণ করা হচ্ছে...',
-          style: Theme.of(context).textTheme.bodyLarge,
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 12),
-        Text(
-          'অনুগ্রহ করে অপেক্ষা করুন',
-          style: Theme.of(context).textTheme.bodySmall,
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 20),
-      ],
+        children: [
+          const SizedBox(height: 20),
+          const SizedBox(
+            width: 44,
+            height: 44,
+            child: CircularProgressIndicator(strokeWidth: 3.2),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'আপনার ফসল বিশ্লেষণ করা হচ্ছে...',
+            style: Theme.of(context).textTheme.bodyLarge,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'অনুগ্রহ করে অপেক্ষা করুন',
+            style: Theme.of(context).textTheme.bodySmall,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 20),
+        ],
       ),
     );
   }
 
   /// Success state - show results
-  Widget _buildSuccessState(
-    BuildContext context,
-    PlantDetectionSuccess state,
-  ) {
+  Widget _buildSuccessState(BuildContext context, PlantDetectionSuccess state) {
     final result = state.result;
     return Column(
       children: [
@@ -284,7 +278,10 @@ class PlantDetectionPage extends StatelessWidget {
                           return Container(
                             color: const Color(0xFFDDDDDD),
                             alignment: Alignment.center,
-                            child: const Icon(Icons.image_not_supported, size: 42),
+                            child: const Icon(
+                              Icons.image_not_supported,
+                              size: 42,
+                            ),
                           );
                         },
                       ),
@@ -295,9 +292,9 @@ class PlantDetectionPage extends StatelessWidget {
                       child: _overlayIconButton(
                         icon: Icons.arrow_back_ios_new_rounded,
                         onTap: () {
-                          context
-                              .read<PlantDetectionBloc>()
-                              .add(ReturnToImagePreviewEvent(result.imageUrl));
+                          context.read<PlantDetectionBloc>().add(
+                            ReturnToImagePreviewEvent(result.imageUrl),
+                          );
                         },
                       ),
                     ),
@@ -307,9 +304,9 @@ class PlantDetectionPage extends StatelessWidget {
                       child: _overlayIconButton(
                         icon: Icons.close_rounded,
                         onTap: () {
-                          context
-                              .read<PlantDetectionBloc>()
-                              .add(const ResetPlantDetectionEvent());
+                          context.read<PlantDetectionBloc>().add(
+                            const ResetPlantDetectionEvent(),
+                          );
                         },
                       ),
                     ),
@@ -328,9 +325,9 @@ class PlantDetectionPage extends StatelessWidget {
                 recoveryPlan: result.recoveryPlan,
                 severity: result.severity,
                 onScanAgain: () {
-                  context
-                      .read<PlantDetectionBloc>()
-                      .add(ReturnToImagePreviewEvent(result.imageUrl));
+                  context.read<PlantDetectionBloc>().add(
+                    ReturnToImagePreviewEvent(result.imageUrl),
+                  );
                 },
               ),
             ],
@@ -346,18 +343,14 @@ class PlantDetectionPage extends StatelessWidget {
       children: [
         _buildHeroBanner(context),
         const SizedBox(height: 24),
-        Icon(
-          Icons.error_outline,
-          size: 80,
-          color: Colors.red[400],
-        ),
+        Icon(Icons.error_outline, size: 80, color: Colors.red[400]),
         const SizedBox(height: 24),
         Text(
           'সমস্যা হয়েছে',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: Colors.red,
-                fontWeight: FontWeight.bold,
-              ),
+            color: Colors.red,
+            fontWeight: FontWeight.bold,
+          ),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 12),
@@ -377,9 +370,9 @@ class PlantDetectionPage extends StatelessWidget {
         const SizedBox(height: 24),
         ElevatedButton.icon(
           onPressed: () {
-            context
-                .read<PlantDetectionBloc>()
-                .add(const ResetPlantDetectionEvent());
+            context.read<PlantDetectionBloc>().add(
+              const ResetPlantDetectionEvent(),
+            );
           },
           icon: const Icon(Icons.home),
           label: const Text('হোম পেজে ফিরুন / Go Back'),
@@ -415,11 +408,7 @@ class PlantDetectionPage extends StatelessWidget {
               color: Colors.white.withOpacity(0.18),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(
-              Icons.eco_rounded,
-              color: Colors.white,
-              size: 30,
-            ),
+            child: const Icon(Icons.eco_rounded, color: Colors.white, size: 30),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -429,16 +418,16 @@ class PlantDetectionPage extends StatelessWidget {
                 Text(
                   'Leaf Disease Detection',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Upload a leaf photo for instant AI diagnosis',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.white.withOpacity(0.92),
-                      ),
+                    color: Colors.white.withOpacity(0.92),
+                  ),
                 ),
               ],
             ),
@@ -466,17 +455,13 @@ class PlantDetectionPage extends StatelessWidget {
       ),
     );
   }
-
 }
 
 class _FeatureChip extends StatelessWidget {
   final IconData icon;
   final String label;
 
-  const _FeatureChip({
-    required this.icon,
-    required this.label,
-  });
+  const _FeatureChip({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -495,13 +480,12 @@ class _FeatureChip extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFF2E7D32),
-                  fontWeight: FontWeight.w600,
-                ),
+              color: const Color(0xFF2E7D32),
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
     );
   }
-
 }

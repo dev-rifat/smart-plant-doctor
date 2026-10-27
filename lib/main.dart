@@ -7,15 +7,14 @@ import 'package:plant_health/core/navigation/app_router.dart';
 import 'package:plant_health/core/navigation/navigation_service.dart';
 import 'package:plant_health/core/resources/strings.dart';
 import 'package:plant_health/core/theme/app_theme.dart';
+import 'package:plant_health/features/agro_products/presentation/cubit/cart_cubit.dart';
 import 'package:plant_health/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:plant_health/features/plant_detection/presentation/bloc/plant_detection_bloc.dart';
 import 'package:plant_health/firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await AppConfig.initialize(); // fetch Gemini key from Remote Config
   setupServiceLocator();
   runApp(const MyApp());
@@ -30,12 +29,13 @@ class MyApp extends StatelessWidget {
 
     return MultiBlocProvider(
       providers: [
-        BlocProvider<AuthCubit>(
-          create: (context) => getIt<AuthCubit>(),
-        ),
+        BlocProvider<AuthCubit>(create: (context) => getIt<AuthCubit>()),
         BlocProvider<PlantDetectionBloc>(
           create: (context) => getIt<PlantDetectionBloc>(),
         ),
+        // Above MaterialApp so every route (catalog, chat, checkout) shares
+        // one cart. `.value` because GetIt owns the singleton's lifetime.
+        BlocProvider<CartCubit>.value(value: getIt<CartCubit>()),
       ],
       child: MaterialApp(
         title: AppStrings.appName,

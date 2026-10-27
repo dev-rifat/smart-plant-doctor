@@ -27,18 +27,21 @@ class AppConfig {
     try {
       final remoteConfig = FirebaseRemoteConfig.instance;
 
-      await remoteConfig.setConfigSettings(RemoteConfigSettings(
-        fetchTimeout: const Duration(seconds: 10),
-        minimumFetchInterval: const Duration(hours: 1),
-      ));
+      await remoteConfig.setConfigSettings(
+        RemoteConfigSettings(
+          fetchTimeout: const Duration(seconds: 10),
+          minimumFetchInterval: const Duration(hours: 1),
+        ),
+      );
 
       // Set default so the app works even before first fetch
       await remoteConfig.setDefaults({'gemini_api_keys': _fallbackKeysCsv});
 
       await remoteConfig.fetchAndActivate();
 
-      final fetchedKeys =
-          _parseKeys(remoteConfig.getString('gemini_api_keys').trim());
+      final fetchedKeys = _parseKeys(
+        remoteConfig.getString('gemini_api_keys').trim(),
+      );
       if (fetchedKeys.isNotEmpty) {
         _keys = fetchedKeys;
         debugPrint('✅ Loaded ${_keys.length} Gemini key(s) from Remote Config');

@@ -56,8 +56,10 @@ class WeatherService {
       throw Exception('Weather data not available');
     }
 
-    final tempMaxList = (daily['temperature_2m_max'] as List<dynamic>?) ?? const [];
-    final tempMinList = (daily['temperature_2m_min'] as List<dynamic>?) ?? const [];
+    final tempMaxList =
+        (daily['temperature_2m_max'] as List<dynamic>?) ?? const [];
+    final tempMinList =
+        (daily['temperature_2m_min'] as List<dynamic>?) ?? const [];
     final rainChanceList =
         (daily['precipitation_probability_max'] as List<dynamic>?) ?? const [];
     final uvList = (daily['uv_index_max'] as List<dynamic>?) ?? const [];
@@ -67,12 +69,15 @@ class WeatherService {
       feelsLike: (current['apparent_temperature'] as num?)?.toDouble() ?? 0,
       humidity: (current['relative_humidity_2m'] as num?)?.toInt() ?? 0,
       rainMm: (current['precipitation'] as num?)?.toDouble() ?? 0,
-      maxTemp:
-          tempMaxList.isNotEmpty ? (tempMaxList.first as num).toDouble() : 0,
-      minTemp:
-          tempMinList.isNotEmpty ? (tempMinList.first as num).toDouble() : 0,
-      rainChance:
-          rainChanceList.isNotEmpty ? (rainChanceList.first as num).toInt() : 0,
+      maxTemp: tempMaxList.isNotEmpty
+          ? (tempMaxList.first as num).toDouble()
+          : 0,
+      minTemp: tempMinList.isNotEmpty
+          ? (tempMinList.first as num).toDouble()
+          : 0,
+      rainChance: rainChanceList.isNotEmpty
+          ? (rainChanceList.first as num).toInt()
+          : 0,
       uvIndexMax: uvList.isNotEmpty ? (uvList.first as num).toDouble() : 0,
       windSpeed: (current['wind_speed_10m'] as num?)?.toDouble() ?? 0,
       weatherCode: (current['weather_code'] as num?)?.toInt() ?? -1,

@@ -7,6 +7,14 @@ class FirebaseAuthService {
 
   User? get currentUser => _firebaseAuth.currentUser;
 
+  /// Accounts are keyed by phone via a synthetic email, so the phone the
+  /// user signed up with can be recovered without storing it separately.
+  String? get currentUserPhone {
+    final email = currentUser?.email;
+    if (email == null || !email.endsWith('@smartkrishi.app')) return null;
+    return email.split('@').first;
+  }
+
   Future<UserCredential> signUpWithPhonePassword({
     required String userName,
     required String phoneNumber,

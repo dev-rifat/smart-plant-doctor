@@ -19,7 +19,14 @@ class MedicineDetail extends Equatable {
   });
 
   @override
-  List<Object?> get props => [name, bengaliName, type, dosage, imageUrl, usecase];
+  List<Object?> get props => [
+    name,
+    bengaliName,
+    type,
+    dosage,
+    imageUrl,
+    usecase,
+  ];
 }
 
 /// Recovery plan step
@@ -68,16 +75,16 @@ class PlantAnalysisResult extends Equatable {
 
   @override
   List<Object?> get props => [
-        isHealthy,
-        disease,
-        bengaliDisease,
-        symptoms,
-        bengaliSymptoms,
-        treatment,
-        advice,
-        imageUrl,
-        medicines,
-        recoveryPlan,
-        severity,
-      ];
+    isHealthy,
+    disease,
+    bengaliDisease,
+    symptoms,
+    bengaliSymptoms,
+    treatment,
+    advice,
+    imageUrl,
+    medicines,
+    recoveryPlan,
+    severity,
+  ];
 }

@@ -5,8 +5,8 @@ import 'package:plant_health/features/auth/presentation/cubit/auth_state.dart';
 
 class AuthCubit extends Cubit<AuthState> {
   AuthCubit({required FirebaseAuthService authService})
-      : _authService = authService,
-        super(const AuthInitial());
+    : _authService = authService,
+      super(const AuthInitial());
 
   final FirebaseAuthService _authService;
 

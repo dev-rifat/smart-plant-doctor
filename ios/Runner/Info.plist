@@ -24,6 +24,10 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>ভয়েসে প্রশ্ন করে কৃষি পণ্য খুঁজতে মাইক্রোফোন প্রয়োজন।</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>আপনার বলা কথা লেখায় রূপান্তর করে AI সহায়ককে পাঠাতে স্পিচ রিকগনিশন প্রয়োজন।</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>

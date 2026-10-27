@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
+import 'package:plant_health/core/navigation/app_router.dart';
 import 'package:plant_health/core/resources/strings.dart';
+import 'package:plant_health/features/agro_products/presentation/pages/agro_products_page.dart';
 import 'package:plant_health/features/auth/presentation/pages/profile_page.dart';
 import 'package:plant_health/features/plant_detection/presentation/pages/plant_detection_page.dart';
 import 'package:plant_health/services/weather_service.dart';
@@ -22,7 +24,7 @@ class _HomeNavPageState extends State<HomeNavPage> {
       _HomeOverviewTab(),
       _AdviceTab(),
       PlantDetectionPage(),
-      _NotificationTab(),
+      AgroProductsPage(),
       ProfilePage(),
     ];
   }
@@ -67,8 +69,8 @@ class _HomeNavPageState extends State<HomeNavPage> {
         inactiveColorPrimary: inactiveColor,
       ),
       PersistentBottomNavBarItem(
-        icon: const Icon(Icons.notifications_active_rounded),
-        title: 'Notification',
+        icon: const Icon(Icons.medication_rounded),
+        title: 'Medicine',
         textStyle: const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
@@ -144,6 +146,7 @@ class _HomeOverviewTabState extends State<_HomeOverviewTab> {
       appBar: AppBar(
         elevation: 0,
         title: const Text(AppStrings.appName),
+        actions: const [_NotificationBellButton(), SizedBox(width: 4)],
       ),
       body: Container(
         width: double.infinity,
@@ -171,7 +174,17 @@ class _HomeOverviewTabState extends State<_HomeOverviewTab> {
               subtitle: 'পাতার নতুন ছবি আপলোড করে সাথে সাথে AI বিশ্লেষণ পান।',
             ),
             const SizedBox(height: 12),
-        
+            _FeatureSummaryCard(
+              icon: Icons.medication_rounded,
+              title: 'কৃষি ওষুধ ও পণ্য',
+              subtitle:
+                  'ছত্রাকনাশক, কীটনাশক, সার ও জৈব পণ্যের তালিকা — AI চ্যাট ও ভয়েসে সঠিক পণ্য খুঁজুন।',
+              // Root navigator so the product screens cover the bottom nav bar.
+              onTap: () => Navigator.of(
+                context,
+                rootNavigator: true,
+              ).pushNamed(AppRouter.agroProducts),
+            ),
             const SizedBox(height: 12),
             const _FeatureSummaryCard(
               icon: Icons.lightbulb_outline_rounded,
@@ -235,13 +248,8 @@ class _WeatherUpdateCard extends StatelessWidget {
               children: [
                 const Icon(Icons.cloud_off_rounded, color: Color(0xFF2E7D32)),
                 const SizedBox(width: 10),
-                const Expanded(
-                  child: Text('আবহাওয়ার আপডেট পাওয়া যায়নি'),
-                ),
-                TextButton(
-                  onPressed: onRefresh,
-                  child: const Text('Retry'),
-                ),
+                const Expanded(child: Text('আবহাওয়ার আপডেট পাওয়া যায়নি')),
+                TextButton(onPressed: onRefresh, child: const Text('Retry')),
               ],
             );
           }
@@ -252,9 +260,9 @@ class _WeatherUpdateCard extends StatelessWidget {
               : data.time;
           final imageUrl = weatherService.weatherImageUrl(data.weatherCode);
           final advice = weatherService.beginnerAdvice(data);
-            final riskLevel = weatherService.farmingRiskLevel(data);
-            final actions = weatherService.actionChecklist(data);
-            final imageCaption = weatherService.imageCaption(data);
+          final riskLevel = weatherService.farmingRiskLevel(data);
+          final actions = weatherService.actionChecklist(data);
+          final imageCaption = weatherService.imageCaption(data);
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -266,8 +274,8 @@ class _WeatherUpdateCard extends StatelessWidget {
                   Text(
                     'আজকের আবহাওয়া (ঢাকা)',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const Spacer(),
                   IconButton(
@@ -294,7 +302,9 @@ class _WeatherUpdateCard extends StatelessWidget {
                           return Container(
                             color: const Color(0xFFE7F3E9),
                             alignment: Alignment.center,
-                            child: const CircularProgressIndicator(strokeWidth: 2.2),
+                            child: const CircularProgressIndicator(
+                              strokeWidth: 2.2,
+                            ),
                           );
                         },
                         errorBuilder: (context, error, stackTrace) {
@@ -402,9 +412,7 @@ class _WeatherUpdateCard extends StatelessWidget {
                             children: [
                               Text(
                                 '${weatherService.weatherLabel(data.weatherCode)} · ${data.temperature.toStringAsFixed(1)}°C',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleMedium
+                                style: Theme.of(context).textTheme.titleMedium
                                     ?.copyWith(
                                       color: Colors.white,
                                       fontWeight: FontWeight.w700,
@@ -413,9 +421,7 @@ class _WeatherUpdateCard extends StatelessWidget {
                               const SizedBox(height: 2),
                               Text(
                                 imageCaption,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
+                                style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(
                                       color: Colors.white.withOpacity(0.95),
                                     ),
@@ -432,9 +438,9 @@ class _WeatherUpdateCard extends StatelessWidget {
               Text(
                 advice,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: const Color(0xFF1E4926),
-                      fontWeight: FontWeight.w600,
-                    ),
+                  color: const Color(0xFF1E4926),
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 10),
               Container(
@@ -451,12 +457,14 @@ class _WeatherUpdateCard extends StatelessWidget {
                     Text(
                       'কৃষকের আজকের করণীয়',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF1E4926),
-                          ),
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF1E4926),
+                      ),
                     ),
                     const SizedBox(height: 8),
-                    ...actions.take(3).map(
+                    ...actions
+                        .take(3)
+                        .map(
                           (item) => Padding(
                             padding: const EdgeInsets.only(bottom: 6),
                             child: Row(
@@ -573,15 +581,15 @@ class _WeatherMetricChip extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF4A7A57),
-                      ),
+                    color: const Color(0xFF4A7A57),
+                  ),
                 ),
                 Text(
                   value,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1E4926),
-                      ),
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1E4926),
+                  ),
                 ),
               ],
             ),
@@ -613,16 +621,16 @@ class _OverviewHeroCard extends StatelessWidget {
           Text(
             'Welcome to স্মার্ট কৃষি',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             'Manage crop health, detect disease, and stay updated from one place.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white.withOpacity(0.92),
-                ),
+              color: Colors.white.withOpacity(0.92),
+            ),
           ),
         ],
       ),
@@ -635,59 +643,91 @@ class _FeatureSummaryCard extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.subtitle,
+    this.onTap,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x12000000),
-            blurRadius: 18,
-            offset: Offset(0, 8),
-          ),
-        ],
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x12000000),
+              blurRadius: 18,
+              offset: Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE6F4E8),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, color: const Color(0xFF2E7D32)),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
+                ],
+              ),
+            ),
+            if (onTap != null)
+              const Padding(
+                padding: EdgeInsets.only(left: 8, top: 12),
+                child: Icon(
+                  Icons.chevron_right_rounded,
+                  color: Color(0xFF2E7D32),
+                ),
+              ),
+          ],
+        ),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE6F4E8),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(icon, color: const Color(0xFF2E7D32)),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  subtitle,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ],
-            ),
-          ),
-        ],
+    );
+  }
+}
+
+/// Opens notifications as a full page from the app bar; the bottom-nav slot
+/// it used to occupy now hosts the agro medicine module.
+class _NotificationBellButton extends StatelessWidget {
+  const _NotificationBellButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: 'নোটিফিকেশন',
+      onPressed: () => Navigator.of(
+        context,
+        rootNavigator: true,
+      ).push(MaterialPageRoute(builder: (_) => const _NotificationTab())),
+      icon: const Badge(
+        smallSize: 8,
+        backgroundColor: Color(0xFFE2574C),
+        child: Icon(Icons.notifications_none_rounded),
       ),
     );
   }
@@ -699,10 +739,7 @@ class _NotificationTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        title: const Text('নোটিফিকেশন'),
-      ),
+      appBar: AppBar(elevation: 0, title: const Text('নোটিফিকেশন')),
       body: Container(
         width: double.infinity,
         decoration: const BoxDecoration(
@@ -770,16 +807,18 @@ class _NotificationInfoCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.notifications_active_rounded,
-              color: Color(0xFF2E7D32)),
+          const Icon(
+            Icons.notifications_active_rounded,
+            color: Color(0xFF2E7D32),
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               'এখানে আপনার স্ক্যান, পরামর্শ ও যত্ন সংক্রান্ত আপডেট দেখানো হবে।',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF2E7D32),
-                    fontWeight: FontWeight.w600,
-                  ),
+                color: const Color(0xFF2E7D32),
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -838,25 +877,25 @@ class _NotificationItem extends StatelessWidget {
                 Text(
                   title,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1E4926),
-                      ),
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1E4926),
+                  ),
                 ),
                 const SizedBox(height: 5),
                 Text(
                   message,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: const Color(0xFF4B6351),
-                        height: 1.35,
-                      ),
+                    color: const Color(0xFF4B6351),
+                    height: 1.35,
+                  ),
                 ),
                 const SizedBox(height: 7),
                 Text(
                   time,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF6F8A75),
-                        fontWeight: FontWeight.w600,
-                      ),
+                    color: const Color(0xFF6F8A75),
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),
@@ -873,10 +912,7 @@ class _AdviceTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        title: const Text('চাষাবাদ টিপস'),
-      ),
+      appBar: AppBar(elevation: 0, title: const Text('চাষাবাদ টিপস')),
       body: Container(
         width: double.infinity,
         decoration: const BoxDecoration(
@@ -892,51 +928,51 @@ class _AdviceTab extends StatelessWidget {
             _TipsHeaderCard(),
             SizedBox(height: 14),
             _BanglaTipCard(
-            imageUrl:
-              'https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=1400&q=80',
-            title: '১) সঠিক গাছ নির্বাচন (Native Trees Priority)',
+              imageUrl:
+                  'https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=1400&q=80',
+              title: '১) সঠিক গাছ নির্বাচন (Native Trees Priority)',
               description:
-              'ইউক্যালিপটাস বা আকাশমণির মতো পরিবেশের ক্ষতি করা গাছ না লাগিয়ে দেশি প্রজাতির গাছ লাগান। দ্রুত সবুজ আচ্ছাদন পেতে উদাল, ছাতিম, জারুল বা কাঠবাদাম গাছ বেছে নিন। বর্ষা মৌসুমের শুরুতে গাছ লাগানো সবচেয়ে ভালো।',
+                  'ইউক্যালিপটাস বা আকাশমণির মতো পরিবেশের ক্ষতি করা গাছ না লাগিয়ে দেশি প্রজাতির গাছ লাগান। দ্রুত সবুজ আচ্ছাদন পেতে উদাল, ছাতিম, জারুল বা কাঠবাদাম গাছ বেছে নিন। বর্ষা মৌসুমের শুরুতে গাছ লাগানো সবচেয়ে ভালো।',
             ),
             SizedBox(height: 14),
             _BanglaTipCard(
-            imageUrl:
-              'https://images.unsplash.com/photo-1591857177580-dc82b9ac4e1e?auto=format&fit=crop&w=1400&q=80',
-            title: '২) মাটি ও টব ব্যবস্থাপনা (Soil & Container Tips)',
+              imageUrl:
+                  'https://images.unsplash.com/photo-1591857177580-dc82b9ac4e1e?auto=format&fit=crop&w=1400&q=80',
+              title: '২) মাটি ও টব ব্যবস্থাপনা (Soil & Container Tips)',
               description:
-              'অল্প জায়গায় বেশি গাছ লাগাতে Geo Beds বা Grow Bags ব্যবহার করুন। টবে গাছ লাগালে অবশ্যই নিচে গর্ত নিশ্চিত করুন, যাতে অতিরিক্ত পানি বের হয়ে যেতে পারে। মাটির সাথে জৈব সার বা ভার্মিকম্পোস্ট মিশিয়ে মাটি উর্বর করুন।',
+                  'অল্প জায়গায় বেশি গাছ লাগাতে Geo Beds বা Grow Bags ব্যবহার করুন। টবে গাছ লাগালে অবশ্যই নিচে গর্ত নিশ্চিত করুন, যাতে অতিরিক্ত পানি বের হয়ে যেতে পারে। মাটির সাথে জৈব সার বা ভার্মিকম্পোস্ট মিশিয়ে মাটি উর্বর করুন।',
             ),
             SizedBox(height: 14),
             _BanglaTipCard(
-            imageUrl:
-              'https://images.unsplash.com/photo-1560493676-04071c5f467b?auto=format&fit=crop&w=1400&q=80',
-            title: '৩) আধুনিক ও পরিকল্পিত চাষাবাদ (Smart Farming)',
+              imageUrl:
+                  'https://images.unsplash.com/photo-1560493676-04071c5f467b?auto=format&fit=crop&w=1400&q=80',
+              title: '৩) আধুনিক ও পরিকল্পিত চাষাবাদ (Smart Farming)',
               description:
-              'BARI (Bangladesh Agricultural Research Institute) বা কৃষি অফিস থেকে উন্নত মানের বীজ ও চারা সংগ্রহ করুন। ছোট জায়গায় বা ছাদে বাগান করলে লম্বা ও ছোট গাছ একসাথে মিশিয়ে রোপণ করুন। গাছের গোড়ায় পানি জমে থাকলে তা দূর করার ব্যবস্থা করুন।',
+                  'BARI (Bangladesh Agricultural Research Institute) বা কৃষি অফিস থেকে উন্নত মানের বীজ ও চারা সংগ্রহ করুন। ছোট জায়গায় বা ছাদে বাগান করলে লম্বা ও ছোট গাছ একসাথে মিশিয়ে রোপণ করুন। গাছের গোড়ায় পানি জমে থাকলে তা দূর করার ব্যবস্থা করুন।',
             ),
             SizedBox(height: 14),
             _BanglaTipCard(
-            imageUrl:
-              'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=1400&q=80',
-            title: '৪) চারা ও শিকড় ব্যবস্থাপনা (Seedling & Root Care)',
+              imageUrl:
+                  'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=1400&q=80',
+              title: '৪) চারা ও শিকড় ব্যবস্থাপনা (Seedling & Root Care)',
               description:
-              'চারা লাগানোর সময় শিকড় যেন ক্ষতিগ্রস্ত না হয় সেদিকে খেয়াল রাখুন। শিকড় মজবুত করার জন্য প্রয়োজনীয় প্রাকৃতিক সার বা টনিক ব্যবহার করুন।',
-          ),
-          SizedBox(height: 14),
-          _BanglaTipCard(
-            imageUrl:
-              'https://images.unsplash.com/photo-1589923158776-cb4485d99fd6?auto=format&fit=crop&w=1400&q=80',
-            title: '৫) রক্ষণাবেক্ষণ (Maintenance)',
-            description:
-              'নিয়মিত বাগানের গাছের পরিচর্যা করুন এবং পোকা দমনের জন্য বালাইনাশক ব্যবহার করুন। শাকসবজি চাষের ক্ষেত্রে সঠিক সার ও বীজের অনুপাত মেনে চলুন।',
-          ),
-          SizedBox(height: 14),
-          _BanglaTipCard(
-            imageUrl:
-              'https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&w=1400&q=80',
-            title: 'Geo Grow Bag ও জৈব সার',
-            description:
-              'আপনার বাগানের জন্য প্রয়োজনীয় Geo Grow Bag এবং জৈব সার Siraj Tech থেকে কিনতে পারেন।',
+                  'চারা লাগানোর সময় শিকড় যেন ক্ষতিগ্রস্ত না হয় সেদিকে খেয়াল রাখুন। শিকড় মজবুত করার জন্য প্রয়োজনীয় প্রাকৃতিক সার বা টনিক ব্যবহার করুন।',
+            ),
+            SizedBox(height: 14),
+            _BanglaTipCard(
+              imageUrl:
+                  'https://images.unsplash.com/photo-1589923158776-cb4485d99fd6?auto=format&fit=crop&w=1400&q=80',
+              title: '৫) রক্ষণাবেক্ষণ (Maintenance)',
+              description:
+                  'নিয়মিত বাগানের গাছের পরিচর্যা করুন এবং পোকা দমনের জন্য বালাইনাশক ব্যবহার করুন। শাকসবজি চাষের ক্ষেত্রে সঠিক সার ও বীজের অনুপাত মেনে চলুন।',
+            ),
+            SizedBox(height: 14),
+            _BanglaTipCard(
+              imageUrl:
+                  'https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&w=1400&q=80',
+              title: 'Geo Grow Bag ও জৈব সার',
+              description:
+                  'আপনার বাগানের জন্য প্রয়োজনীয় Geo Grow Bag এবং জৈব সার Siraj Tech থেকে কিনতে পারেন।',
             ),
           ],
         ),
@@ -966,16 +1002,16 @@ class _TipsHeaderCard extends StatelessWidget {
           Text(
             'আজকের কৃষি পরামর্শ',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             'নিচের পরামর্শগুলো অনুসরণ করলে গাছের স্বাস্থ্য ও উৎপাদনশীলতা উন্নত হবে।',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white.withOpacity(0.95),
-                ),
+              color: Colors.white.withOpacity(0.95),
+            ),
           ),
         ],
       ),
@@ -1040,17 +1076,17 @@ class _BanglaTipCard extends StatelessWidget {
                   Text(
                     title,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1E4926),
-                        ),
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF1E4926),
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     description,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: const Color(0xFF3F5C45),
-                          height: 1.4,
-                        ),
+                      color: const Color(0xFF3F5C45),
+                      height: 1.4,
+                    ),
                   ),
                 ],
               ),
@@ -1061,4 +1097,3 @@ class _BanglaTipCard extends StatelessWidget {
     );
   }
 }
-
