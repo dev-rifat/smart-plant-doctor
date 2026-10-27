@@ -7,7 +7,6 @@ import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 import 'package:plant_health/core/di/injection.dart';
 import 'package:plant_health/core/services/voice_input_service.dart';
 import 'package:plant_health/core/services/voice_output_service.dart';
-import 'package:plant_health/core/navigation/app_router.dart';
 import 'package:plant_health/core/resources/strings.dart';
 import 'package:plant_health/features/agro_products/presentation/pages/agro_products_page.dart';
 import 'package:plant_health/features/auth/presentation/pages/profile_page.dart';
@@ -17,6 +16,7 @@ import 'package:plant_health/features/voice_assistant/domain/voice_responder.dar
 import 'package:plant_health/features/voice_assistant/presentation/cubit/voice_assistant_cubit.dart';
 import 'package:plant_health/features/voice_assistant/presentation/voice_guide.dart';
 import 'package:plant_health/features/voice_assistant/presentation/widgets/voice_assistant_panel.dart';
+import 'package:plant_health/features/home/presentation/widgets/home_greeting.dart';
 import 'package:plant_health/services/weather_service.dart';
 
 class HomeNavPage extends StatefulWidget {
@@ -110,7 +110,7 @@ class _HomeNavPageState extends State<HomeNavPage> {
     return [
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.home_rounded),
-        title: 'Home',
+        title: 'হোম',
         textStyle: const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
@@ -121,7 +121,7 @@ class _HomeNavPageState extends State<HomeNavPage> {
       ),
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.tips_and_updates_rounded),
-        title: 'Tips',
+        title: 'পরামর্শ',
         textStyle: const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
@@ -132,7 +132,7 @@ class _HomeNavPageState extends State<HomeNavPage> {
       ),
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.add, color: Colors.white),
-        title: 'Scan',
+        title: 'রোগ পরীক্ষা',
         textStyle: const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
@@ -143,7 +143,7 @@ class _HomeNavPageState extends State<HomeNavPage> {
       ),
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.medication_rounded),
-        title: 'Medicine',
+        title: 'বাজার',
         textStyle: const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
@@ -154,7 +154,7 @@ class _HomeNavPageState extends State<HomeNavPage> {
       ),
       PersistentBottomNavBarItem(
         icon: const Icon(Icons.person_rounded),
-        title: 'Profile',
+        title: 'আমার তথ্য',
         textStyle: const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
@@ -242,38 +242,16 @@ class _HomeOverviewTabState extends State<_HomeOverviewTab> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            const HomeGreeting(),
+            const SizedBox(height: 16),
             const VoiceAssistantPanel(),
-            const SizedBox(height: 16),
-            const _OverviewHeroCard(),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
+            const QuickActions(),
+            const SizedBox(height: 20),
             _WeatherUpdateCard(
               weatherService: _weatherService,
               weatherFuture: _weatherFuture,
               onRefresh: _refreshWeather,
-            ),
-            const SizedBox(height: 12),
-            const _FeatureSummaryCard(
-              icon: Icons.document_scanner_rounded,
-              title: 'ফসলের পাতা স্ক্যান করুন',
-              subtitle: 'পাতার নতুন ছবি আপলোড করে সাথে সাথে AI বিশ্লেষণ পান।',
-            ),
-            const SizedBox(height: 12),
-            _FeatureSummaryCard(
-              icon: Icons.medication_rounded,
-              title: 'কৃষি ওষুধ ও পণ্য',
-              subtitle:
-                  'ছত্রাকনাশক, কীটনাশক, সার ও জৈব পণ্যের তালিকা — AI চ্যাট ও ভয়েসে সঠিক পণ্য খুঁজুন।',
-              // Root navigator so the product screens cover the bottom nav bar.
-              onTap: () => Navigator.of(
-                context,
-                rootNavigator: true,
-              ).pushNamed(AppRouter.agroProducts),
-            ),
-            const SizedBox(height: 12),
-            const _FeatureSummaryCard(
-              icon: Icons.lightbulb_outline_rounded,
-              title: 'দৈনিক কৃষি পরামর্শ',
-              subtitle: 'ফসল ভালো রাখতে স্মার্ট পরিচর্যার পরামর্শ দেখুন।',
             ),
           ],
         ),
@@ -684,119 +662,6 @@ class _WeatherMetricChip extends StatelessWidget {
   }
 }
 
-class _OverviewHeroCard extends StatelessWidget {
-  const _OverviewHeroCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        gradient: const LinearGradient(
-          colors: [Color(0xFF2E7D32), Color(0xFF66BB6A)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Welcome to স্মার্ট কৃষি',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Manage crop health, detect disease, and stay updated from one place.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.white.withOpacity(0.92),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FeatureSummaryCard extends StatelessWidget {
-  const _FeatureSummaryCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x12000000),
-              blurRadius: 18,
-              offset: Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE6F4E8),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(icon, color: const Color(0xFF2E7D32)),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
-                ],
-              ),
-            ),
-            if (onTap != null)
-              const Padding(
-                padding: EdgeInsets.only(left: 8, top: 12),
-                child: Icon(
-                  Icons.chevron_right_rounded,
-                  color: Color(0xFF2E7D32),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Opens notifications as a full page from the app bar; the bottom-nav slot
-/// it used to occupy now hosts the agro medicine module.
 class _NotificationBellButton extends StatelessWidget {
   const _NotificationBellButton();
 

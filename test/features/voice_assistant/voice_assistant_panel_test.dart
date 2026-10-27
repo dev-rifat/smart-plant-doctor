@@ -74,6 +74,7 @@ void main() {
   ) async {
     await pumpPanel(tester);
     await tester.enterText(find.byType(TextField), 'আজ বৃষ্টি হবে কি?');
+    await tester.ensureVisible(find.byIcon(Icons.send_rounded));
     await tester.tap(find.byIcon(Icons.send_rounded));
     await tester.pumpAndSettle();
 

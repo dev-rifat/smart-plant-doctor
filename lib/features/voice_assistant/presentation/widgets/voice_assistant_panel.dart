@@ -1,12 +1,14 @@
-import 'package:plant_health/core/services/phone_settings.dart';
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:plant_health/core/services/phone_settings.dart';
 import 'package:plant_health/core/theme/app_colors.dart';
 import 'package:plant_health/features/voice_assistant/data/local_command_responder.dart';
 import 'package:plant_health/features/voice_assistant/presentation/cubit/voice_assistant_cubit.dart';
 
-/// Home-screen voice assistant: one big mic, what was heard (editable),
-/// and the answer with "শুনুন / থামুন".
+/// Home-screen assistant, shown as a conversation with "কৃষিসাথী": what the
+/// farmer said on the right, the answer on the left, one big living mic.
 ///
 /// Every spoken answer is also shown as text, and every voice action has a
 /// tap/typing fallback, because recognition and Bangla TTS are not
@@ -21,6 +23,13 @@ class VoiceAssistantPanel extends StatefulWidget {
 class _VoiceAssistantPanelState extends State<VoiceAssistantPanel> {
   final _text = TextEditingController();
   final _focus = FocusNode();
+
+  /// One-tap questions, for farmers who'd rather tap than speak.
+  static const _suggestions = [
+    'আজ বৃষ্টি হবে কি?',
+    'ধানের রোগ পরীক্ষা করো',
+    'কৃষি পণ্য দেখাও',
+  ];
 
   @override
   void dispose() {
@@ -46,57 +55,119 @@ class _VoiceAssistantPanelState extends State<VoiceAssistantPanel> {
         if (!_focus.hasFocus) _text.text = state.transcript;
       },
       builder: (context, state) {
-        return Card(
-          elevation: 0,
-          color: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+        final busy = state.status == VoiceStatus.processing;
+        return Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFFE8F5E9), Color(0xFFFFF8E1)],
+            ),
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.12),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                _MicButton(state: state, cubit: cubit),
-                const SizedBox(height: 10),
-                _StatusLine(state: state),
-                if (state.voiceProblem) ...[
-                  const SizedBox(height: 10),
-                  OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(52),
-                    ),
-                    onPressed: PhoneSettings.openVoiceInput,
-                    icon: const Icon(Icons.settings_voice_rounded),
-                    label: const Text(
-                      'সেটিং খুলুন',
-                      style: TextStyle(fontSize: 18),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 14),
-                TextField(
-                  controller: _text,
-                  focusNode: _focus,
-                  minLines: 1,
-                  maxLines: 3,
-                  style: const TextStyle(fontSize: 17),
-                  textInputAction: TextInputAction.send,
-                  onSubmitted: (_) => _send(cubit),
-                  decoration: InputDecoration(
-                    hintText: 'অথবা এখানে লিখে প্রশ্ন করুন',
-                    suffixIcon: IconButton(
-                      tooltip: 'পাঠান',
-                      icon: const Icon(Icons.send_rounded),
-                      onPressed: state.status == VoiceStatus.processing
-                          ? null
-                          : () => _send(cubit),
-                    ),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const _AssistantTitle(),
+              const SizedBox(height: 14),
+              if (state.transcript.isNotEmpty) ...[
+                _Bubble(text: state.transcript, fromFarmer: true),
+                const SizedBox(height: 8),
+              ],
+              _Bubble(
+                text: busy
+                    ? 'একটু ভাবছি…'
+                    : state.reply ?? LocalCommandResponder.greeting,
+                fromFarmer: false,
+                trailing: state.canSpeak && !busy
+                    ? _SpeakerButton(state: state, cubit: cubit)
+                    : null,
+              ),
+              if (!state.canSpeak)
+                const Padding(
+                  padding: EdgeInsets.only(top: 6, left: 4),
+                  child: Text(
+                    'এই ফোনে বাংলা কণ্ঠ নেই, তাই উত্তর শুধু লেখায় দেখানো হচ্ছে।',
+                    style: TextStyle(fontSize: 14, color: Colors.black54),
                   ),
                 ),
-                const SizedBox(height: 14),
-                _ReplyBox(state: state, cubit: cubit),
+              const SizedBox(height: 22),
+              Center(child: _LivingMic(state: state, cubit: cubit)),
+              const SizedBox(height: 12),
+              _StatusLine(state: state),
+              if (state.voiceProblem) ...[
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(52),
+                    backgroundColor: Colors.white,
+                  ),
+                  onPressed: PhoneSettings.openVoiceInput,
+                  icon: const Icon(Icons.settings_voice_rounded),
+                  label: const Text(
+                    'সেটিং খুলুন',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                ),
               ],
-            ),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: WrapAlignment.center,
+                children: [
+                  for (final q in _suggestions)
+                    ActionChip(
+                      avatar: const Icon(Icons.touch_app_rounded, size: 18),
+                      label: Text(q, style: const TextStyle(fontSize: 15)),
+                      backgroundColor: Colors.white,
+                      side: BorderSide(
+                        color: AppColors.primary.withValues(alpha: 0.3),
+                      ),
+                      onPressed: busy ? null : () => cubit.submit(q),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: _text,
+                focusNode: _focus,
+                minLines: 1,
+                maxLines: 3,
+                style: const TextStyle(fontSize: 17),
+                textInputAction: TextInputAction.send,
+                onSubmitted: (_) => _send(cubit),
+                decoration: InputDecoration(
+                  hintText: 'অথবা এখানে লিখে প্রশ্ন করুন',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 14,
+                  ),
+                  suffixIcon: IconButton(
+                    tooltip: 'পাঠান',
+                    icon: const Icon(
+                      Icons.send_rounded,
+                      color: AppColors.primary,
+                    ),
+                    onPressed: busy ? null : () => _send(cubit),
+                  ),
+                ),
+              ),
+            ],
           ),
         );
       },
@@ -104,44 +175,304 @@ class _VoiceAssistantPanelState extends State<VoiceAssistantPanel> {
   }
 }
 
-class _MicButton extends StatelessWidget {
-  const _MicButton({required this.state, required this.cubit});
+class _AssistantTitle extends StatelessWidget {
+  const _AssistantTitle();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Row(
+      children: [
+        _Avatar(),
+        SizedBox(width: 10),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'কৃষিসাথী',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primaryDark,
+              ),
+            ),
+            Text(
+              'আপনার কৃষি সহকারী',
+              style: TextStyle(fontSize: 13, color: Colors.black54),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _Avatar extends StatelessWidget {
+  const _Avatar();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 42,
+      height: 42,
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          colors: [Color(0xFF66BB6A), AppColors.primaryDark],
+        ),
+      ),
+      child: const Icon(Icons.eco_rounded, color: Colors.white, size: 24),
+    );
+  }
+}
+
+/// Chat bubble: the farmer's words on the right, the assistant on the left.
+class _Bubble extends StatelessWidget {
+  const _Bubble({required this.text, required this.fromFarmer, this.trailing});
+
+  final String text;
+  final bool fromFarmer;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final bubble = Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+      decoration: BoxDecoration(
+        color: fromFarmer ? AppColors.primary : Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: const Radius.circular(20),
+          topRight: const Radius.circular(20),
+          bottomLeft: Radius.circular(fromFarmer ? 20 : 4),
+          bottomRight: Radius.circular(fromFarmer ? 4 : 20),
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x14000000),
+            blurRadius: 6,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 18,
+                height: 1.45,
+                color: fromFarmer ? Colors.white : Colors.black87,
+              ),
+            ),
+          ),
+          if (trailing != null) ...[const SizedBox(width: 4), trailing!],
+        ],
+      ),
+    );
+
+    return Row(
+      mainAxisAlignment: fromFarmer
+          ? MainAxisAlignment.end
+          : MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Flexible(child: bubble),
+        if (fromFarmer) ...[
+          const SizedBox(width: 10),
+          const CircleAvatar(
+            radius: 21,
+            backgroundColor: Color(0xFFFFE0B2),
+            child: Icon(Icons.person_rounded, color: Color(0xFF8D6E63)),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _SpeakerButton extends StatelessWidget {
+  const _SpeakerButton({required this.state, required this.cubit});
 
   final VoiceAssistantState state;
   final VoiceAssistantCubit cubit;
 
   @override
   Widget build(BuildContext context) {
-    final listening = state.status == VoiceStatus.listening;
-    final color = listening ? const Color(0xFFD84343) : AppColors.primary;
+    final speaking = state.status == VoiceStatus.speaking;
+    return IconButton.filledTonal(
+      tooltip: speaking ? 'থামুন' : 'শুনুন',
+      iconSize: 26,
+      onPressed: speaking
+          ? cubit.stopSpeaking
+          : state.reply == null
+          ? () => cubit.say(LocalCommandResponder.greeting)
+          : cubit.repeat,
+      icon: Icon(speaking ? Icons.stop_rounded : Icons.volume_up_rounded),
+    );
+  }
+}
+
+/// Big mic that breathes: rings pulse out while listening, bars dance while
+/// the assistant speaks, so a farmer who can't read still sees what's on.
+class _LivingMic extends StatefulWidget {
+  const _LivingMic({required this.state, required this.cubit});
+
+  final VoiceAssistantState state;
+  final VoiceAssistantCubit cubit;
+
+  @override
+  State<_LivingMic> createState() => _LivingMicState();
+}
+
+class _LivingMicState extends State<_LivingMic>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _anim = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1400),
+  );
+
+  bool get _animated =>
+      widget.state.status == VoiceStatus.listening ||
+      widget.state.status == VoiceStatus.speaking;
+
+  @override
+  void initState() {
+    super.initState();
+    _sync();
+  }
+
+  @override
+  void didUpdateWidget(_LivingMic old) {
+    super.didUpdateWidget(old);
+    _sync();
+  }
+
+  // Animation only runs while something is happening, so idle screens (and
+  // widget tests) are still.
+  void _sync() {
+    if (_animated && !_anim.isAnimating) {
+      _anim.repeat();
+    } else if (!_animated && _anim.isAnimating) {
+      _anim
+        ..stop()
+        ..reset();
+    }
+  }
+
+  @override
+  void dispose() {
+    _anim.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final status = widget.state.status;
+    final listening = status == VoiceStatus.listening;
+    final speaking = status == VoiceStatus.speaking;
+    final color = listening ? const Color(0xFFE53935) : AppColors.primary;
 
     return Semantics(
       button: true,
       label: listening ? 'শোনা থামান' : 'মাইক চেপে কথা বলুন',
       child: GestureDetector(
-        onTap: listening ? cubit.stopListening : cubit.startListening,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          width: 96,
-          height: 96,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: color.withValues(alpha: listening ? 0.5 : 0.25),
-                blurRadius: listening ? 24 : 12,
-                spreadRadius: listening ? 6 : 1,
-              ),
-            ],
-          ),
-          child: Icon(
-            listening ? Icons.stop_rounded : Icons.mic_rounded,
-            color: Colors.white,
-            size: 48,
+        onTap: listening
+            ? widget.cubit.stopListening
+            : widget.cubit.startListening,
+        child: SizedBox(
+          width: 170,
+          height: 170,
+          child: AnimatedBuilder(
+            animation: _anim,
+            builder: (context, _) => Stack(
+              alignment: Alignment.center,
+              children: [
+                if (listening)
+                  for (final offset in [0.0, 0.5])
+                    _Ring(progress: (_anim.value + offset) % 1, color: color),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  width: 104,
+                  height: 104,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [color.withValues(alpha: 0.85), color],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.35),
+                        blurRadius: 18,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: speaking
+                      ? _SoundBars(progress: _anim.value)
+                      : Icon(
+                          listening ? Icons.stop_rounded : Icons.mic_rounded,
+                          color: Colors.white,
+                          size: 52,
+                        ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _Ring extends StatelessWidget {
+  const _Ring({required this.progress, required this.color});
+
+  final double progress;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final size = 104 + 66 * progress;
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: color.withValues(alpha: 0.45 * (1 - progress)),
+          width: 3,
+        ),
+      ),
+    );
+  }
+}
+
+class _SoundBars extends StatelessWidget {
+  const _SoundBars({required this.progress});
+
+  final double progress;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        for (var i = 0; i < 5; i++)
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 3),
+            width: 7,
+            height:
+                14 + 26 * (0.5 + 0.5 * math.sin(2 * math.pi * progress + i)),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -154,10 +485,10 @@ class _StatusLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (String text, Color color) = switch (state.status) {
-      VoiceStatus.idle => ('মাইক চেপে কথা বলুন', Colors.black87),
+      VoiceStatus.idle => ('মাইক চেপে কথা বলুন', AppColors.primaryDark),
       VoiceStatus.listening => (
         'শুনছি… বলা শেষ হলে একটু থামুন',
-        const Color(0xFFD84343),
+        const Color(0xFFE53935),
       ),
       VoiceStatus.processing => ('ভাবছি…', AppColors.primaryDark),
       VoiceStatus.speaking => ('বলছি…', AppColors.primaryDark),
@@ -194,61 +525,6 @@ class _StatusLine extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _ReplyBox extends StatelessWidget {
-  const _ReplyBox({required this.state, required this.cubit});
-
-  final VoiceAssistantState state;
-  final VoiceAssistantCubit cubit;
-
-  @override
-  Widget build(BuildContext context) {
-    final reply = state.reply ?? LocalCommandResponder.greeting;
-    final speaking = state.status == VoiceStatus.speaking;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEAF5EC),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(reply, style: const TextStyle(fontSize: 18, height: 1.45)),
-          const SizedBox(height: 10),
-          if (!state.canSpeak)
-            const Text(
-              'এই ফোনে বাংলা কণ্ঠ নেই, তাই উত্তর শুধু লেখায় দেখানো হচ্ছে।',
-              style: TextStyle(fontSize: 14, color: Colors.black54),
-            )
-          else
-            Align(
-              alignment: Alignment.centerRight,
-              child: FilledButton.tonalIcon(
-                style: FilledButton.styleFrom(minimumSize: const Size(140, 52)),
-                onPressed: state.status == VoiceStatus.processing
-                    ? null
-                    : speaking
-                    ? cubit.stopSpeaking
-                    : state.reply == null
-                    ? () => cubit.say(reply)
-                    : cubit.repeat,
-                icon: Icon(
-                  speaking ? Icons.stop_rounded : Icons.volume_up_rounded,
-                ),
-                label: Text(
-                  speaking ? 'থামুন' : 'শুনুন',
-                  style: const TextStyle(fontSize: 17),
-                ),
-              ),
-            ),
-        ],
-      ),
     );
   }
 }

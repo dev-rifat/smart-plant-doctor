@@ -53,37 +53,37 @@ class _OnboardingView extends StatelessWidget {
               children: [
                 _Progress(step: state.step),
                 const SizedBox(height: 24),
-                Text(
-                  state.prompt,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    height: 1.4,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryDark,
-                  ),
-                ),
+                _AssistantSays(state.prompt),
                 const SizedBox(height: 28),
                 _MicIndicator(state: state),
-                if (state.heard.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  Text(
-                    'আপনি বললেন: "${state.heard}"',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 18),
+                // Fixed height, so buttons below never jump when a hint
+                // appears or disappears (a farmer's tap would miss).
+                SizedBox(
+                  height: 84,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (state.heard.isNotEmpty)
+                        Text(
+                          'আপনি বললেন: "${state.heard}"',
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 18),
+                        ),
+                      if (state.hint != null)
+                        Text(
+                          state.hint!,
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            color: Color(0xFF8A5300),
+                          ),
+                        ),
+                    ],
                   ),
-                ],
-                if (state.hint != null) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    state.hint!,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      color: Color(0xFF8A5300),
-                    ),
-                  ),
-                ],
+                ),
                 if (state.voiceProblem) ...[
                   const SizedBox(height: 16),
                   const _VoiceFixCard(),
@@ -205,7 +205,8 @@ class _MicIndicator extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          label,
+          // The hint below already says what to do; don't say it twice.
+          state.mic == SetupMic.idle && state.hint != null ? '' : label,
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w600,
@@ -359,5 +360,68 @@ class _FallbackState extends State<_Fallback> {
       case SetupStep.saving || SetupStep.done:
         return const SizedBox.shrink();
     }
+  }
+}
+
+/// The assistant's question as a speech bubble from "কৃষিসাথী", so it
+/// reads like a person talking, not a form.
+class _AssistantSays extends StatelessWidget {
+  const _AssistantSays(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Container(
+          width: 52,
+          height: 52,
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              colors: [Color(0xFF66BB6A), AppColors.primaryDark],
+            ),
+          ),
+          child: const Icon(Icons.eco_rounded, color: Colors.white, size: 30),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: Container(
+              key: ValueKey(text),
+              padding: const EdgeInsets.all(18),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(24),
+                  topRight: Radius.circular(24),
+                  bottomRight: Radius.circular(24),
+                  bottomLeft: Radius.circular(6),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0x1A000000),
+                    blurRadius: 12,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Text(
+                text,
+                style: const TextStyle(
+                  fontSize: 21,
+                  height: 1.45,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primaryDark,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }

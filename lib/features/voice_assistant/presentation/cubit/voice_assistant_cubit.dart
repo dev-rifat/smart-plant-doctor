@@ -221,6 +221,12 @@ class VoiceAssistantCubit extends Cubit<VoiceAssistantState> {
     await _speak(text, generation);
   }
 
+  /// Opens a screen from a tap (quick-action tiles), same path as a
+  /// spoken command so navigation lives in one place.
+  void open(VoiceAction action) {
+    if (!isClosed) _actions.add(action);
+  }
+
   /// Reads the last answer again ("আবার বলুন").
   Future<void> repeat() async {
     final answer = state.reply;
