@@ -16,6 +16,7 @@ class VoiceAssistantState extends Equatable {
     this.reply,
     this.errorMessage,
     this.canSpeak = true,
+    this.voiceProblem = false,
   });
 
   final VoiceStatus status;
@@ -34,12 +35,16 @@ class VoiceAssistantState extends Equatable {
   /// "read the answer below" instead of showing a play button.
   final bool canSpeak;
 
+  /// The phone's recognizer keeps failing on Bangla: show the settings fix.
+  final bool voiceProblem;
+
   VoiceAssistantState copyWith({
     VoiceStatus? status,
     String? transcript,
     String? reply,
     String? errorMessage,
     bool? canSpeak,
+    bool? voiceProblem,
   }) => VoiceAssistantState(
     status: status ?? this.status,
     transcript: transcript ?? this.transcript,
@@ -47,6 +52,7 @@ class VoiceAssistantState extends Equatable {
     // Errors only live for the state that reports them.
     errorMessage: errorMessage,
     canSpeak: canSpeak ?? this.canSpeak,
+    voiceProblem: voiceProblem ?? this.voiceProblem,
   );
 
   @override
@@ -56,6 +62,7 @@ class VoiceAssistantState extends Equatable {
     reply,
     errorMessage,
     canSpeak,
+    voiceProblem,
   ];
 }
 
@@ -85,8 +92,14 @@ class VoiceAssistantCubit extends Cubit<VoiceAssistantState> {
       'মাইক্রোফোন চালু করা যায়নি। অনুমতি দিন অথবা নিচে লিখে প্রশ্ন করুন।';
   static const _nothingHeardMessage =
       'কোনো কথা শোনা যায়নি। মাইক চেপে আবার বলুন।';
+  static const voiceFixMessage =
+      'এই ফোন বাংলা কথা বুঝতে পারছে না। "সেটিং খুলুন" চেপে ভয়েস ইনপুটে '
+      '"Google" বেছে নিন, অথবা নিচে লিখে প্রশ্ন করুন।';
 
-  Future<void> startListening() async {
+  /// [quiet] is for listening the assistant started on its own (after a
+  /// greeting or an answer): if the farmer says nothing it just goes idle,
+  /// without an error, and never re-opens the mic by itself.
+  Future<void> startListening({bool quiet = false}) async {
     final generation = ++_generation;
     await _output.stop();
     emit(state.copyWith(status: VoiceStatus.listening, transcript: ''));
@@ -98,7 +111,7 @@ class VoiceAssistantCubit extends Cubit<VoiceAssistantState> {
         emit(state.copyWith(transcript: text));
         if (isFinal && text.trim().isNotEmpty) {
           submitted = true;
-          submit(text);
+          submit(text, fromVoice: true);
         }
       },
       onStopped: () {
@@ -106,21 +119,16 @@ class VoiceAssistantCubit extends Cubit<VoiceAssistantState> {
         if (state.status != VoiceStatus.listening) return;
         // Recognizer gave up without a final result (silence, noise).
         final heard = state.transcript.trim();
-        if (heard.isEmpty) {
-          emit(
-            state.copyWith(
-              status: VoiceStatus.error,
-              errorMessage: _nothingHeardMessage,
-            ),
-          );
-        } else {
+        if (heard.isNotEmpty) {
           submitted = true;
-          submit(heard);
+          submit(heard, fromVoice: true);
+        } else {
+          _nothingHeard(quiet, _nothingHeardMessage);
         }
       },
       onError: (message) {
         if (isClosed || generation != _generation) return;
-        emit(state.copyWith(status: VoiceStatus.error, errorMessage: message));
+        _nothingHeard(quiet, message);
       },
     );
 
@@ -131,12 +139,44 @@ class VoiceAssistantCubit extends Cubit<VoiceAssistantState> {
     }
   }
 
+  void _nothingHeard(bool quiet, String message) {
+    if (_input.banglaRecognitionLooksBroken) {
+      emit(
+        state.copyWith(
+          status: VoiceStatus.error,
+          errorMessage: voiceFixMessage,
+          voiceProblem: true,
+        ),
+      );
+      _output.speak(voiceFixMessage);
+    } else if (quiet) {
+      emit(state.copyWith(status: VoiceStatus.idle));
+    } else {
+      emit(state.copyWith(status: VoiceStatus.error, errorMessage: message));
+    }
+  }
+
+  /// Speaks [greeting] and then listens once on its own - what the home
+  /// screen does on open, so the farmer can just start talking.
+  Future<void> greetAndListen(String greeting) async {
+    if (state.status != VoiceStatus.idle) return;
+    final generation = ++_generation;
+    await _input.stop();
+    emit(state.copyWith(reply: greeting));
+    if (await _speak(greeting, generation)) {
+      await startListening(quiet: true);
+    }
+  }
+
   /// Ends listening early; whatever was heard so far is submitted by the
   /// recognizer's stop callback.
   Future<void> stopListening() => _input.stop();
 
   /// Answers [text] - from speech or typed/corrected by the farmer.
-  Future<void> submit(String text) async {
+  ///
+  /// A spoken question gets a follow-up listen after the answer, like a
+  /// conversation; a typed one doesn't (the farmer is using the keyboard).
+  Future<void> submit(String text, {bool fromVoice = false}) async {
     final question = text.trim();
     if (question.isEmpty || state.status == VoiceStatus.processing) return;
 
@@ -164,7 +204,11 @@ class VoiceAssistantCubit extends Cubit<VoiceAssistantState> {
     emit(state.copyWith(reply: answer.text));
     final action = answer.action;
     if (action != null) _actions.add(action);
-    await _speak(answer.text, generation);
+    final finished = await _speak(answer.text, generation);
+    // After opening a screen the next step is a tap/photo, not speech.
+    if (finished && fromVoice && action == null) {
+      await startListening(quiet: true);
+    }
   }
 
   /// Shows and reads [text] without a question, e.g. the welcome line when
@@ -190,12 +234,14 @@ class VoiceAssistantCubit extends Cubit<VoiceAssistantState> {
     if (!isClosed) emit(state.copyWith(status: VoiceStatus.idle));
   }
 
-  Future<void> _speak(String answer, int generation) async {
+  /// True if the utterance played to the end without being interrupted.
+  Future<bool> _speak(String answer, int generation) async {
     emit(state.copyWith(status: VoiceStatus.speaking));
     // Completes when the utterance ends or is stopped.
     final spoke = await _output.speak(answer);
-    if (isClosed || generation != _generation) return;
+    if (isClosed || generation != _generation) return false;
     emit(state.copyWith(status: VoiceStatus.idle, canSpeak: spoke));
+    return spoke;
   }
 
   @override

@@ -1,3 +1,4 @@
+import 'package:plant_health/features/onboarding/data/farmer_profile_repository.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -44,8 +45,24 @@ class _HomeNavPageState extends State<HomeNavPage> {
   void initState() {
     super.initState();
     _voiceActions; // start listening now, not on first access
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => getIt<VoiceGuide>().announce(GuideScreen.home),
+    WidgetsBinding.instance.addPostFrameCallback((_) => _greet());
+  }
+
+  /// Greets the farmer by name and starts listening, so they can simply
+  /// talk. Skipped when they turned automatic guidance off.
+  Future<void> _greet() async {
+    if (!getIt<VoiceGuide>().enabled.value) return;
+    String? name;
+    try {
+      name = (await getIt<FarmerProfileRepository>().load())?.name;
+    } catch (_) {
+      // Offline or no profile: greet without a name.
+    }
+    if (!mounted) return;
+    await _voice.greetAndListen(
+      '${name == null ? 'আসসালামু আলাইকুম' : 'আসসালামু আলাইকুম $name'}! '
+      'বলুন, কী সাহায্য দরকার? যেমন বলুন, ধানের রোগ পরীক্ষা করো, '
+      'অথবা আজ বৃষ্টি হবে কি।',
     );
   }
 

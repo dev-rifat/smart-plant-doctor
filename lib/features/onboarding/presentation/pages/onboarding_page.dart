@@ -1,0 +1,363 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:plant_health/core/di/injection.dart';
+import 'package:plant_health/core/navigation/app_router.dart';
+import 'package:plant_health/core/services/phone_settings.dart';
+import 'package:plant_health/core/services/voice_input_service.dart';
+import 'package:plant_health/core/services/voice_output_service.dart';
+import 'package:plant_health/core/theme/app_colors.dart';
+import 'package:plant_health/features/onboarding/data/farmer_profile_repository.dart';
+import 'package:plant_health/features/onboarding/domain/bangla_answers.dart';
+import 'package:plant_health/features/onboarding/presentation/cubit/onboarding_cubit.dart';
+
+/// First launch: the assistant talks the farmer through setup. No password,
+/// nothing to read; typing and buttons are there only as a fallback.
+class OnboardingPage extends StatelessWidget {
+  const OnboardingPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => OnboardingCubit(
+        getIt<VoiceInputService>(),
+        getIt<VoiceOutputService>(),
+        getIt<FarmerProfileRepository>(),
+      )..start(),
+      child: const _OnboardingView(),
+    );
+  }
+}
+
+class _OnboardingView extends StatelessWidget {
+  const _OnboardingView();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<OnboardingCubit, OnboardingState>(
+      // Leave once the goodbye line has been spoken.
+      listenWhen: (a, b) =>
+          b.step == SetupStep.done &&
+          b.mic == SetupMic.idle &&
+          a.mic != SetupMic.idle,
+      listener: (context, _) => Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRouter.home,
+        (_) => false,
+      ),
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF4F9F4),
+        body: SafeArea(
+          child: BlocBuilder<OnboardingCubit, OnboardingState>(
+            builder: (context, state) => ListView(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+              children: [
+                _Progress(step: state.step),
+                const SizedBox(height: 24),
+                Text(
+                  state.prompt,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    height: 1.4,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryDark,
+                  ),
+                ),
+                const SizedBox(height: 28),
+                _MicIndicator(state: state),
+                if (state.heard.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    'আপনি বললেন: "${state.heard}"',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 18),
+                  ),
+                ],
+                if (state.hint != null) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    state.hint!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      color: Color(0xFF8A5300),
+                    ),
+                  ),
+                ],
+                if (state.voiceProblem) ...[
+                  const SizedBox(height: 16),
+                  const _VoiceFixCard(),
+                ],
+                const SizedBox(height: 24),
+                _Fallback(state: state),
+                const SizedBox(height: 32),
+                TextButton(
+                  onPressed: () =>
+                      Navigator.pushReplacementNamed(context, AppRouter.login),
+                  child: const Text(
+                    'আগে অ্যাকাউন্ট খুলেছেন? পাসওয়ার্ড দিয়ে লগইন করুন',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Progress extends StatelessWidget {
+  const _Progress({required this.step});
+
+  final SetupStep step;
+
+  @override
+  Widget build(BuildContext context) {
+    final index = switch (step) {
+      SetupStep.name || SetupStep.confirmName => 0,
+      SetupStep.district => 1,
+      SetupStep.crop => 2,
+      _ => 3,
+    };
+    const labels = ['নাম', 'জেলা', 'ফসল'];
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        for (var i = 0; i < labels.length; i++) ...[
+          Chip(
+            avatar: Icon(
+              i < index ? Icons.check_circle_rounded : Icons.circle_outlined,
+              color: i <= index ? AppColors.primary : Colors.black38,
+            ),
+            label: Text(labels[i], style: const TextStyle(fontSize: 16)),
+          ),
+          if (i < labels.length - 1) const SizedBox(width: 8),
+        ],
+      ],
+    );
+  }
+}
+
+class _MicIndicator extends StatelessWidget {
+  const _MicIndicator({required this.state});
+
+  final OnboardingState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final cubit = context.read<OnboardingCubit>();
+    final busy = state.step == SetupStep.saving;
+    final (IconData icon, Color color, String label) = switch (state.mic) {
+      SetupMic.speaking => (
+        Icons.volume_up_rounded,
+        AppColors.primaryDark,
+        'বলছি…',
+      ),
+      SetupMic.listening => (
+        Icons.mic_rounded,
+        const Color(0xFFD84343),
+        'শুনছি… এখন বলুন',
+      ),
+      SetupMic.idle => (
+        Icons.mic_none_rounded,
+        AppColors.primary,
+        'মাইক চেপে বলুন',
+      ),
+    };
+    final canTap =
+        state.mic == SetupMic.idle &&
+        !busy &&
+        state.step != SetupStep.done &&
+        state.step != SetupStep.failed;
+
+    return Column(
+      children: [
+        Semantics(
+          button: canTap,
+          label: label,
+          child: GestureDetector(
+            onTap: canTap ? cubit.listenAgain : null,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.4),
+                    blurRadius: state.mic == SetupMic.listening ? 30 : 12,
+                    spreadRadius: state.mic == SetupMic.listening ? 8 : 1,
+                  ),
+                ],
+              ),
+              child: busy
+                  ? const Padding(
+                      padding: EdgeInsets.all(36),
+                      child: CircularProgressIndicator(color: Colors.white),
+                    )
+                  : Icon(icon, color: Colors.white, size: 60),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _VoiceFixCard extends StatelessWidget {
+  const _VoiceFixCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: const Color(0xFFFFF3E0),
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'এই ফোন বাংলা কথা বুঝতে পারছে না। সেটিং খুলে ভয়েস ইনপুটে "Google" বেছে নিন, তারপর ফিরে এসে মাইক চাপুন।',
+              style: TextStyle(fontSize: 17),
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(56),
+              ),
+              onPressed: () async {
+                final opened = await PhoneSettings.openVoiceInput();
+                if (!opened && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('সেটিং খোলা যায়নি। নিচে লিখে উত্তর দিন।'),
+                    ),
+                  );
+                }
+              },
+              icon: const Icon(Icons.settings_voice_rounded),
+              label: const Text('সেটিং খুলুন', style: TextStyle(fontSize: 18)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Buttons and a text box for the current question, for when speaking
+/// doesn't work or the farmer prefers to tap.
+class _Fallback extends StatefulWidget {
+  const _Fallback({required this.state});
+
+  final OnboardingState state;
+
+  @override
+  State<_Fallback> createState() => _FallbackState();
+}
+
+class _FallbackState extends State<_Fallback> {
+  final _text = TextEditingController();
+
+  @override
+  void didUpdateWidget(_Fallback old) {
+    super.didUpdateWidget(old);
+    if (old.state.step != widget.state.step) _text.clear();
+  }
+
+  @override
+  void dispose() {
+    _text.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cubit = context.read<OnboardingCubit>();
+    final s = widget.state;
+    const big = TextStyle(fontSize: 20, fontWeight: FontWeight.w600);
+
+    switch (s.step) {
+      case SetupStep.confirmName:
+        return Row(
+          children: [
+            Expanded(
+              child: FilledButton(
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(60),
+                ),
+                onPressed: () => cubit.answer('হ্যাঁ'),
+                child: const Text('হ্যাঁ', style: big),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(60),
+                ),
+                onPressed: () => cubit.answer('না'),
+                child: const Text('না', style: big),
+              ),
+            ),
+          ],
+        );
+      case SetupStep.crop:
+        return Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            for (final crop in BanglaAnswers.crops.keys)
+              ActionChip(
+                label: Text(crop, style: const TextStyle(fontSize: 19)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                onPressed: () => cubit.answer(crop),
+              ),
+          ],
+        );
+      case SetupStep.name || SetupStep.district:
+        return TextField(
+          controller: _text,
+          style: const TextStyle(fontSize: 19),
+          textInputAction: TextInputAction.done,
+          onSubmitted: cubit.answer,
+          decoration: InputDecoration(
+            hintText: s.step == SetupStep.name
+                ? 'অথবা নাম লিখুন'
+                : 'অথবা জেলার নাম লিখুন',
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.send_rounded),
+              onPressed: () => cubit.answer(_text.text),
+            ),
+          ),
+        );
+      case SetupStep.failed:
+        return FilledButton.icon(
+          style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(60)),
+          onPressed: cubit.retry,
+          icon: const Icon(Icons.refresh_rounded),
+          label: const Text('আবার চেষ্টা করুন', style: big),
+        );
+      case SetupStep.saving || SetupStep.done:
+        return const SizedBox.shrink();
+    }
+  }
+}

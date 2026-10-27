@@ -1,3 +1,4 @@
+import 'package:plant_health/core/services/phone_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:plant_health/core/theme/app_colors.dart';
@@ -58,6 +59,20 @@ class _VoiceAssistantPanelState extends State<VoiceAssistantPanel> {
                 _MicButton(state: state, cubit: cubit),
                 const SizedBox(height: 10),
                 _StatusLine(state: state),
+                if (state.voiceProblem) ...[
+                  const SizedBox(height: 10),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(52),
+                    ),
+                    onPressed: PhoneSettings.openVoiceInput,
+                    icon: const Icon(Icons.settings_voice_rounded),
+                    label: const Text(
+                      'সেটিং খুলুন',
+                      style: TextStyle(fontSize: 18),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 14),
                 TextField(
                   controller: _text,

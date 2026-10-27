@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:speech_to_text/speech_recognition_error.dart';
@@ -31,6 +32,15 @@ class VoiceInputService {
 
   bool get isListening => _speech.isListening;
 
+  String? _lastErrorCode;
+  int _noMatchStreak = 0;
+
+  /// True after the recognizer repeatedly heard speech but understood none
+  /// of it - on phones whose default recognizer has no Bangla (e.g. the
+  /// offline "Speech Services by Google" without Bangla data) this is the
+  /// only symptom. The fix is a phone setting: default voice input → Google.
+  bool get banglaRecognitionLooksBroken => _noMatchStreak >= 2;
+
   /// Initialises the recognizer and asks for mic / speech permissions.
   /// Returns false if the device has no recognizer or permission is denied.
   ///
@@ -49,6 +59,8 @@ class VoiceInputService {
         },
         onError: (SpeechRecognitionError error) {
           debugPrint('🎙️ Speech error: ${error.errorMsg}');
+          _lastErrorCode = error.errorMsg;
+          if (error.errorMsg == 'error_no_match') _noMatchStreak++;
           _onError?.call(_friendlyError(error.errorMsg));
           _onStopped?.call();
         },
@@ -104,11 +116,15 @@ class VoiceInputService {
   }) async {
     if (!await initialize()) return false;
 
+    _lastErrorCode = null;
     _onStopped = onStopped;
     _onError = onError;
 
     await _speech.listen(
-      onResult: (result) => onText(result.recognizedWords, result.finalResult),
+      onResult: (result) {
+        if (result.recognizedWords.trim().isNotEmpty) _noMatchStreak = 0;
+        onText(result.recognizedWords, result.finalResult);
+      },
       listenOptions: SpeechListenOptions(
         localeId: _banglaLocaleId,
         partialResults: true,
@@ -120,6 +136,39 @@ class VoiceInputService {
     );
     return true;
   }
+
+  /// One question-answer turn for assistant-led conversations: listens
+  /// until the farmer pauses, then reports what was heard or why nothing was.
+  Future<Heard> listenOnce() async {
+    final done = Completer<Heard>();
+    var latest = '';
+    void finish(Heard h) {
+      if (!done.isCompleted) done.complete(h);
+    }
+
+    final started = await start(
+      onText: (text, isFinal) {
+        latest = text;
+        if (isFinal && text.trim().isNotEmpty) finish(Heard.text(text.trim()));
+      },
+      onStopped: () => finish(
+        latest.trim().isNotEmpty ? Heard.text(latest.trim()) : _failure(),
+      ),
+      onError: (_) => finish(_failure()),
+    );
+    if (!started) return const Heard.failed(HeardFailure.unavailable);
+    return done.future;
+  }
+
+  Heard _failure() => switch (_lastErrorCode) {
+    'error_no_match' => const Heard.failed(HeardFailure.notUnderstood),
+    'error_network' ||
+    'error_network_timeout' ||
+    'error_server' => const Heard.failed(HeardFailure.network),
+    'error_permission' || 'error_insufficient_permissions' =>
+      const Heard.failed(HeardFailure.unavailable),
+    _ => const Heard.failed(HeardFailure.silence),
+  };
 
   Future<void> stop() async {
     if (_speech.isListening) await _speech.stop();
@@ -148,4 +197,15 @@ class VoiceInputService {
         return 'ভয়েস ইনপুটে সমস্যা হয়েছে। আবার চেষ্টা করুন।';
     }
   }
+}
+
+enum HeardFailure { silence, notUnderstood, network, unavailable }
+
+/// Result of [VoiceInputService.listenOnce].
+class Heard {
+  const Heard.text(String this.text) : failure = null;
+  const Heard.failed(HeardFailure this.failure) : text = null;
+
+  final String? text;
+  final HeardFailure? failure;
 }

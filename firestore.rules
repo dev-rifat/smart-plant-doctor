@@ -4,6 +4,26 @@ rules_version = '2';
 // (via the Firebase console or an admin SDK) can confirm/ship/deliver.
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Farmer profile from the voice setup: owner only, known fields only.
+    match /users/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+
+      allow create, update: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(
+             ['name', 'district', 'primaryCrop', 'language', 'updatedAt'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 40
+        && request.resource.data.district is string
+        && request.resource.data.district.size() <= 30
+        && request.resource.data.primaryCrop is string
+        && request.resource.data.primaryCrop.size() <= 20
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if false;
+    }
+
     match /orders/{orderId} {
       allow read: if request.auth != null
         && resource.data.userId == request.auth.uid;

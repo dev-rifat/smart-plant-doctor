@@ -7,6 +7,7 @@ import 'package:plant_health/features/auth/presentation/pages/login_page.dart';
 import 'package:plant_health/features/auth/presentation/pages/profile_page.dart';
 import 'package:plant_health/features/auth/presentation/pages/signup_page.dart';
 import 'package:plant_health/features/home/presentation/pages/home_nav_page.dart';
+import 'package:plant_health/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:plant_health/features/plant_detection/presentation/pages/splash_screen.dart';
 
 class AppRouter {
@@ -16,6 +17,7 @@ class AppRouter {
   static const String register = '/register';
   static const String profile = '/profile';
   static const String agroProducts = '/agro-products';
+  static const String onboarding = '/onboarding';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -29,6 +31,8 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const SignupPage());
       case profile:
         return MaterialPageRoute(builder: (_) => const ProfilePage());
+      case onboarding:
+        return MaterialPageRoute(builder: (_) => const OnboardingPage());
       case agroProducts:
         return MaterialPageRoute(builder: (_) => const AgroProductsPage());
       default:

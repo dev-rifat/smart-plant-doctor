@@ -11,6 +11,7 @@ import 'package:plant_health/core/config/app_config.dart';
 import 'package:plant_health/core/network/gemini_client.dart';
 import 'package:plant_health/core/services/voice_input_service.dart';
 import 'package:plant_health/core/services/voice_output_service.dart';
+import 'package:plant_health/features/onboarding/data/farmer_profile_repository.dart';
 import 'package:plant_health/features/rice_diagnosis/data/rice_advice_repository.dart';
 import 'package:plant_health/features/rice_diagnosis/data/rice_classifier.dart';
 import 'package:plant_health/features/voice_assistant/presentation/voice_guide.dart';
@@ -87,6 +88,9 @@ void setupServiceLocator() {
   );
   getIt.registerLazySingleton<VoiceInputService>(() => VoiceInputService());
   getIt.registerLazySingleton<VoiceOutputService>(() => VoiceOutputService());
+  getIt.registerLazySingleton<FarmerProfileRepository>(
+    () => FarmerProfileRepository(),
+  );
   getIt.registerLazySingleton<VoiceGuide>(
     () => VoiceGuide(getIt<VoiceOutputService>()),
   );

@@ -1,3 +1,5 @@
+import 'package:plant_health/core/di/injection.dart';
+import 'package:plant_health/features/onboarding/data/farmer_profile_repository.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:plant_health/core/navigation/app_router.dart';
@@ -35,16 +37,26 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    if (_isLoggedIn) {
-      Future.delayed(const Duration(seconds: 5), () {
-        if (!mounted) return;
-        Navigator.pushReplacementNamed(context, AppRouter.home);
-      });
-    } else {
-      Future.delayed(const Duration(seconds: 3), () {
-        if (!mounted) return;
-        Navigator.pushReplacementNamed(context, AppRouter.login);
-      });
+    // Farmers without an account (or who left the voice setup halfway)
+    // go to the spoken setup, not to a password form.
+    Future.wait([
+      _nextRoute(),
+      Future<void>.delayed(Duration(seconds: _isLoggedIn ? 3 : 2)),
+    ]).then((r) {
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, r.first as String);
+    });
+  }
+
+  Future<String> _nextRoute() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return AppRouter.onboarding;
+    if (!user.isAnonymous) return AppRouter.home; // phone + password account
+    try {
+      final profile = await getIt<FarmerProfileRepository>().load();
+      return profile == null ? AppRouter.onboarding : AppRouter.home;
+    } catch (_) {
+      return AppRouter.home; // offline: don't block a farmer who set up before
     }
   }
 

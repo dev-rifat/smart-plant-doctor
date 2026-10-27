@@ -113,8 +113,41 @@ void main() {
 
     output.finish();
     await _settle();
-    expect(cubit.state.status, VoiceStatus.idle);
+    // Conversation: after a spoken question it listens for a follow-up…
+    expect(cubit.state.status, VoiceStatus.listening);
     expect(cubit.state.canSpeak, isTrue);
+
+    // …and silence just ends it, with no error shown.
+    input.onStopped!();
+    expect(cubit.state.status, VoiceStatus.idle);
+    expect(cubit.state.errorMessage, isNull);
+  });
+
+  test('typed question: no automatic listening afterwards', () async {
+    unawaited(cubit.submit('আজ বৃষ্টি হবে কি?'));
+    await _settle();
+    output.finish();
+    await _settle();
+    expect(cubit.state.status, VoiceStatus.idle);
+  });
+
+  test('greeting is spoken, then it listens on its own', () async {
+    unawaited(cubit.greetAndListen('করিম ভাই, বলুন কী সাহায্য দরকার?'));
+    await _settle();
+    expect(output.spoken, ['করিম ভাই, বলুন কী সাহায্য দরকার?']);
+    output.finish();
+    await _settle();
+    expect(cubit.state.status, VoiceStatus.listening);
+  });
+
+  test('command that opens a screen does not keep listening', () async {
+    responder.action = VoiceAction.openDiseaseCheck;
+    await cubit.startListening();
+    input.onText!('রোগ পরীক্ষা করো', true);
+    await _settle();
+    output.finish();
+    await _settle();
+    expect(cubit.state.status, VoiceStatus.idle);
   });
 
   test('mic unavailable shows a Bangla error and keeps typing possible', () async {
