@@ -1,5 +1,4 @@
 import 'package:equatable/equatable.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:plant_health/core/services/voice_input_service.dart';
@@ -107,16 +106,9 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       'তারপর ভয়েস ইনপুটে "Google" বেছে নিন। অথবা নিচে লিখে উত্তর দিন।';
 
   Future<void> start() async {
-    try {
-      await _profiles.ensureSignedIn();
-    } on FirebaseAuthException catch (e) {
-      debugPrint('👤 Anonymous sign-in failed: ${e.code}');
-      return _fail(
-        e.code == 'network-request-failed'
-            ? 'ইন্টারনেট সংযোগ নেই। সংযোগ চালু করে আবার চেষ্টা করুন।'
-            : 'অ্যাকাউন্ট চালু করা যায়নি। পরে আবার চেষ্টা করুন।',
-      );
-    }
+    // An account is nice to have (cloud backup), never a blocker: the
+    // profile is kept on the phone if sign-in isn't possible.
+    await _profiles.ensureSignedIn();
     await _ask(SetupStep.name, welcome);
   }
 

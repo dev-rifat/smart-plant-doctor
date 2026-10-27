@@ -51,10 +51,13 @@ class _Mouth extends VoiceOutputService {
 }
 
 class _Profiles extends Fake implements FarmerProfileRepository {
+  _Profiles({this.canSignIn = true});
+
+  final bool canSignIn;
   FarmerProfile? saved;
 
   @override
-  Future<String> ensureSignedIn() async => 'uid';
+  Future<String?> ensureSignedIn() async => canSignIn ? 'uid' : null;
 
   @override
   Future<void> save(FarmerProfile p) async => saved = p;
@@ -95,7 +98,11 @@ void main() {
 
   test('"না" goes back and asks the name again', () async {
     final cubit = OnboardingCubit(
-      _ScriptedEars(const [Heard.text('করিম'), Heard.text('না'), Heard.text('রহিম')]),
+      _ScriptedEars(const [
+        Heard.text('করিম'),
+        Heard.text('না'),
+        Heard.text('রহিম'),
+      ]),
       _Mouth(),
       _Profiles(),
     );
@@ -163,5 +170,23 @@ void main() {
     await _settle();
     expect(cubit.state.step, SetupStep.district);
     expect(cubit.state.prompt, contains('যেমন রংপুর'));
+  });
+
+  test('no account possible (anonymous off): setup still finishes', () async {
+    final profiles = _Profiles(canSignIn: false);
+    final cubit = OnboardingCubit(
+      _ScriptedEars(const [
+        Heard.text('করিম'),
+        Heard.text('হ্যাঁ'),
+        Heard.text('রংপুর'),
+        Heard.text('ধান'),
+      ]),
+      _Mouth(),
+      profiles,
+    );
+    unawaited(cubit.start());
+    await _settle();
+    expect(cubit.state.step, SetupStep.done);
+    expect(profiles.saved?.name, 'করিম');
   });
 }

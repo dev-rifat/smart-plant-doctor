@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FarmerProfile {
   const FarmerProfile({
@@ -13,9 +15,9 @@ class FarmerProfile {
   final String primaryCrop;
 }
 
-/// Account + profile for the voice setup: no password, the farmer is signed
-/// in anonymously and the profile lives at `users/{uid}` (owner-only rules
-/// in firestore.rules). A phone number can be linked later for recovery.
+/// Profile from the voice setup. Saved on the phone first so setup always
+/// finishes (no internet, or anonymous sign-in not enabled in Firebase), and
+/// copied to `users/{uid}` (owner-only rules) whenever an account exists.
 class FarmerProfileRepository {
   FarmerProfileRepository({FirebaseAuth? auth, FirebaseFirestore? firestore})
     : _auth = auth ?? FirebaseAuth.instance,
@@ -24,13 +26,33 @@ class FarmerProfileRepository {
   final FirebaseAuth _auth;
   final FirebaseFirestore _db;
 
+  static const _kName = 'profile.name';
+  static const _kDistrict = 'profile.district';
+  static const _kCrop = 'profile.primaryCrop';
+
   /// Reuses the existing session, otherwise creates an anonymous account.
-  Future<String> ensureSignedIn() async {
-    final user = _auth.currentUser ?? (await _auth.signInAnonymously()).user;
-    return user!.uid;
+  /// Returns null when no account can be made; the app still works.
+  Future<String?> ensureSignedIn() async {
+    if (_auth.currentUser != null) return _auth.currentUser!.uid;
+    try {
+      return (await _auth.signInAnonymously()).user?.uid;
+    } on FirebaseAuthException catch (e) {
+      debugPrint('👤 Anonymous sign-in failed: ${e.code}');
+      return null;
+    }
   }
 
   Future<FarmerProfile?> load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final name = prefs.getString(_kName);
+    if (name != null) {
+      return FarmerProfile(
+        name: name,
+        district: prefs.getString(_kDistrict) ?? '',
+        primaryCrop: prefs.getString(_kCrop) ?? '',
+      );
+    }
+    // Reinstalled app with a cloud copy.
     final uid = _auth.currentUser?.uid;
     if (uid == null) return null;
     final data = (await _db.collection('users').doc(uid).get()).data();
@@ -42,14 +64,25 @@ class FarmerProfileRepository {
     );
   }
 
+  /// Always saves on the phone; the cloud copy is best effort.
   Future<void> save(FarmerProfile p) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kName, p.name);
+    await prefs.setString(_kDistrict, p.district);
+    await prefs.setString(_kCrop, p.primaryCrop);
+
     final uid = await ensureSignedIn();
-    await _db.collection('users').doc(uid).set({
-      'name': p.name,
-      'district': p.district,
-      'primaryCrop': p.primaryCrop,
-      'language': 'bn',
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    if (uid == null) return;
+    try {
+      await _db.collection('users').doc(uid).set({
+        'name': p.name,
+        'district': p.district,
+        'primaryCrop': p.primaryCrop,
+        'language': 'bn',
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('👤 Cloud profile save failed (kept on phone): $e');
+    }
   }
 }

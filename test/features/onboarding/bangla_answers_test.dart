@@ -3,7 +3,14 @@ import 'package:plant_health/features/onboarding/domain/bangla_answers.dart';
 
 void main() {
   group('yes / no', () {
-    for (final yes in ['হ্যাঁ', 'হ্যা ঠিক আছে', 'জি', 'জ্বি হ্যাঁ', 'ঠিক', 'Ha']) {
+    for (final yes in [
+      'হ্যাঁ',
+      'হ্যা ঠিক আছে',
+      'জি',
+      'জ্বি হ্যাঁ',
+      'ঠিক',
+      'Ha',
+    ]) {
       test(yes, () => expect(BanglaAnswers.yesNo(yes), isTrue));
     }
     for (final no in ['না', 'না ভুল', 'ঠিক না', 'no']) {
@@ -20,7 +27,10 @@ void main() {
       expect(BanglaAnswers.name('রহিম বলে'), 'রহিম');
     });
     test('plain name', () => expect(BanglaAnswers.name('সালমা'), 'সালমা'));
-    test('empty is rejected', () => expect(BanglaAnswers.name('আমার নাম'), isNull));
+    test(
+      'empty is rejected',
+      () => expect(BanglaAnswers.name('আমার নাম'), isNull),
+    );
   });
 
   group('district', () {
@@ -36,7 +46,10 @@ void main() {
     cases.forEach((said, district) {
       test(said, () => expect(BanglaAnswers.district(said), district));
     });
-    test('unknown place', () => expect(BanglaAnswers.district('কলকাতা'), isNull));
+    test(
+      'unknown place',
+      () => expect(BanglaAnswers.district('কলকাতা'), isNull),
+    );
     test('all 64 districts match themselves', () {
       expect(BanglaAnswers.districts.toSet(), hasLength(64));
       for (final d in BanglaAnswers.districts) {
@@ -46,8 +59,14 @@ void main() {
   });
 
   group('crop', () {
-    test('ধান in a sentence', () => expect(BanglaAnswers.crop('আমি ধান চাষ করি'), 'ধান'));
-    test('season name means rice', () => expect(BanglaAnswers.crop('বোরো'), 'ধান'));
+    test(
+      'ধান in a sentence',
+      () => expect(BanglaAnswers.crop('আমি ধান চাষ করি'), 'ধান'),
+    );
+    test(
+      'season name means rice',
+      () => expect(BanglaAnswers.crop('বোরো'), 'ধান'),
+    );
     test('vegetable', () => expect(BanglaAnswers.crop('বেগুন'), 'সবজি'));
     test('unknown', () => expect(BanglaAnswers.crop('মাছ'), isNull));
   });
