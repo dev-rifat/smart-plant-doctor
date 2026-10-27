@@ -48,7 +48,9 @@ class _VoiceAssistantPanelState extends State<VoiceAssistantPanel> {
         return Card(
           elevation: 0,
           color: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -138,10 +140,16 @@ class _StatusLine extends StatelessWidget {
   Widget build(BuildContext context) {
     final (String text, Color color) = switch (state.status) {
       VoiceStatus.idle => ('মাইক চেপে কথা বলুন', Colors.black87),
-      VoiceStatus.listening => ('শুনছি… বলা শেষ হলে একটু থামুন', const Color(0xFFD84343)),
+      VoiceStatus.listening => (
+        'শুনছি… বলা শেষ হলে একটু থামুন',
+        const Color(0xFFD84343),
+      ),
       VoiceStatus.processing => ('ভাবছি…', AppColors.primaryDark),
       VoiceStatus.speaking => ('বলছি…', AppColors.primaryDark),
-      VoiceStatus.error => (state.errorMessage ?? 'সমস্যা হয়েছে', const Color(0xFFB3261E)),
+      VoiceStatus.error => (
+        state.errorMessage ?? 'সমস্যা হয়েছে',
+        const Color(0xFFB3261E),
+      ),
     };
 
     return Row(
@@ -163,7 +171,11 @@ class _StatusLine extends StatelessWidget {
           child: Text(
             text,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: color),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
           ),
         ),
       ],
@@ -211,7 +223,9 @@ class _ReplyBox extends StatelessWidget {
                     : state.reply == null
                     ? () => cubit.say(reply)
                     : cubit.repeat,
-                icon: Icon(speaking ? Icons.stop_rounded : Icons.volume_up_rounded),
+                icon: Icon(
+                  speaking ? Icons.stop_rounded : Icons.volume_up_rounded,
+                ),
                 label: Text(
                   speaking ? 'থামুন' : 'শুনুন',
                   style: const TextStyle(fontSize: 17),

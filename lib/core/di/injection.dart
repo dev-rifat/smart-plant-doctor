@@ -11,6 +11,9 @@ import 'package:plant_health/core/config/app_config.dart';
 import 'package:plant_health/core/network/gemini_client.dart';
 import 'package:plant_health/core/services/voice_input_service.dart';
 import 'package:plant_health/core/services/voice_output_service.dart';
+import 'package:plant_health/features/rice_diagnosis/data/rice_advice_repository.dart';
+import 'package:plant_health/features/rice_diagnosis/data/rice_classifier.dart';
+import 'package:plant_health/features/voice_assistant/presentation/voice_guide.dart';
 import 'package:plant_health/features/agro_products/data/datasources/agro_product_local_datasource.dart';
 import 'package:plant_health/features/agro_products/data/repositories/firestore_order_repository.dart';
 import 'package:plant_health/features/agro_products/data/services/product_assistant_service.dart';
@@ -84,6 +87,15 @@ void setupServiceLocator() {
   );
   getIt.registerLazySingleton<VoiceInputService>(() => VoiceInputService());
   getIt.registerLazySingleton<VoiceOutputService>(() => VoiceOutputService());
+  getIt.registerLazySingleton<VoiceGuide>(
+    () => VoiceGuide(getIt<VoiceOutputService>()),
+  );
+
+  // Rice disease check: on-device model + fixed advice content
+  getIt.registerLazySingleton<RiceClassifier>(() => TfliteRiceClassifier());
+  getIt.registerLazySingleton<RiceAdviceRepository>(
+    () => RiceAdviceRepository(),
+  );
   getIt.registerLazySingleton<ProductAssistantService>(
     () => ProductAssistantService(
       getIt<GeminiClient>(),

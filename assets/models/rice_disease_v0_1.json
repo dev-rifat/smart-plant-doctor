@@ -1,0 +1,51 @@
+{
+  "model_version": "rice-efficientnetb0-v0.1-20261027",
+  "architecture": "EfficientNetB0 (ImageNet) fine-tuned, float16 TFLite",
+  "labels": [
+    "Blast",
+    "Brown spot",
+    "Healthy",
+    "Leaf smut",
+    "Rice Tungro",
+    "Sheath blight"
+  ],
+  "input": {
+    "width": 224,
+    "height": 224,
+    "channels": "RGB",
+    "dtype": "float32",
+    "range": "0-255",
+    "preprocessing": "resize the whole photo to 224x224 (no crop), no normalisation"
+  },
+  "output": "calibrated probabilities, softmax(logits / temperature), same order as labels",
+  "temperature": 1.35,
+  "uncertain_threshold": 0.91,
+  "validation": {
+    "accuracy": 0.7431,
+    "macro_f1": 0.7102,
+    "answered_at_threshold": 0.3264,
+    "accuracy_when_answered": ">=0.95 (validation set)",
+    "f1_per_class": {
+      "Blast": 0.638,
+      "Brown spot": 0.676,
+      "Healthy": 0.853,
+      "Leaf smut": 0.361,
+      "Rice Tungro": 0.861,
+      "Sheath blight": 0.872
+    }
+  },
+  "test_set": "not run yet - reserved for the final model",
+  "dataset": {
+    "name": "RiceLeafDiseaseBD v3",
+    "doi": "10.17632/86s4jzj2m4.3",
+    "license": "CC BY 4.0",
+    "citation": "Munna, M. M. H. et al. (2026), RiceLeafDiseaseBD, Mendeley Data, V3, doi: 10.17632/86s4jzj2m4.3"
+  },
+  "limitations": [
+    "Only 6 classes; other diseases or pests are forced into one of them.",
+    "Photos from Gazipur only, one season (Apr-May 2025), BRRI dhan28/29.",
+    "Blast, Brown spot and Leaf smut are often confused (small lesions).",
+    "Some Sheath blight and Leaf smut photos were predicted Healthy.",
+    "Not validated on real field photos outside the dataset."
+  ]
+}

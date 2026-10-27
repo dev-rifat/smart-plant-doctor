@@ -53,7 +53,8 @@ class LocalCommandResponder implements VoiceResponder {
   static bool _isDiseaseCheck(String t, bool Function(List<String>) has) {
     if (has(['রোগ', 'দাগ', 'স্ক্যান', 'rog', 'scan'])) return true;
     // "পাতা হলুদ হয়ে যাচ্ছে", "ধানের পাতা শুকিয়ে যাচ্ছে"
-    if (t.contains('পাতা') && has(['হলুদ', 'শুকিয়ে', 'পচে', 'বাদামি', 'পোড়া'])) {
+    if (t.contains('পাতা') &&
+        has(['হলুদ', 'শুকিয়ে', 'পচে', 'বাদামি', 'পোড়া'])) {
       return true;
     }
     return t.contains('ধান') && t.contains('পরীক্ষা');
@@ -64,7 +65,9 @@ class LocalCommandResponder implements VoiceResponder {
     try {
       w = await _weather.fetchCurrentWeather();
     } catch (_) {
-      throw Exception('আবহাওয়ার তথ্য আনা যায়নি। ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন।');
+      throw Exception(
+        'আবহাওয়ার তথ্য আনা যায়নি। ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন।',
+      );
     }
 
     final rain = w.rainChance >= 70
@@ -81,19 +84,41 @@ class LocalCommandResponder implements VoiceResponder {
         '(সূত্র: Open-Meteo, আপডেট ${BanglaFormat.digits(updated)})';
   }
 
-  static const _history = ['আগের রিপোর্ট', 'পুরনো রিপোর্ট', 'রিপোর্ট দেখাও', 'ইতিহাস'];
+  static const _history = [
+    'আগের রিপোর্ট',
+    'পুরনো রিপোর্ট',
+    'রিপোর্ট দেখাও',
+    'ইতিহাস',
+  ];
   static const _weatherWords = [
-    'আবহাওয়া', 'বৃষ্টি', 'তাপমাত্রা', 'ঝড়', 'রোদ', 'গরম', 'ঠান্ডা',
-    'weather', 'brishti', 'bristi',
+    'আবহাওয়া',
+    'বৃষ্টি',
+    'তাপমাত্রা',
+    'ঝড়',
+    'রোদ',
+    'গরম',
+    'ঠান্ডা',
+    'weather',
+    'brishti',
+    'bristi',
   ];
   static const _news = ['খবর', 'সংবাদ', 'ব্লগ', 'লেখা পড়ে'];
-  static const _shopping = ['বাজার', 'কিনব', 'কিনতে', 'কেনা', 'পণ্য', 'দোকান', 'অর্ডার'];
+  static const _shopping = [
+    'বাজার',
+    'কিনব',
+    'কিনতে',
+    'কেনা',
+    'পণ্য',
+    'দোকান',
+    'অর্ডার',
+  ];
   static const _profile = ['প্রোফাইল', 'আমার তথ্য', 'profile'];
   static const _greeting = ['সালাম', 'হ্যালো', 'কেমন আছ', 'hello'];
 
   static const _historyNotReady =
       'আগের রিপোর্ট সংরক্ষণ এখনো চালু হয়নি। শীঘ্রই আসছে।';
-  static const _newsNotReady = 'কৃষি খবর ও লেখা অংশ এখনো তৈরি হয়নি। শীঘ্রই আসছে।';
+  static const _newsNotReady =
+      'কৃষি খবর ও লেখা অংশ এখনো তৈরি হয়নি। শীঘ্রই আসছে।';
   static const _notUnderstood =
       'দুঃখিত, এই প্রশ্নের উত্তর এখনো দিতে পারি না। আপনি বলতে পারেন: '
       '"ধানের রোগ পরীক্ষা করো", "আজ বৃষ্টি হবে কি", অথবা "কৃষি পণ্য দেখাও"। '

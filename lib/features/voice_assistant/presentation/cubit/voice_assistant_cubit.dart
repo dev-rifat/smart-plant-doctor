@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:plant_health/core/services/voice_input_service.dart';
 import 'package:plant_health/core/services/voice_output_service.dart';
@@ -49,7 +50,13 @@ class VoiceAssistantState extends Equatable {
   );
 
   @override
-  List<Object?> get props => [status, transcript, reply, errorMessage, canSpeak];
+  List<Object?> get props => [
+    status,
+    transcript,
+    reply,
+    errorMessage,
+    canSpeak,
+  ];
 }
 
 /// One voice turn: listen → show text → answer → read the answer aloud.
@@ -134,10 +141,10 @@ class VoiceAssistantCubit extends Cubit<VoiceAssistantState> {
     if (question.isEmpty || state.status == VoiceStatus.processing) return;
 
     final generation = ++_generation;
+    // Logged so misunderstood commands can be traced on a test phone.
+    debugPrint('🎙️ Heard: "$question"');
     await _input.stop();
-    emit(
-      state.copyWith(status: VoiceStatus.processing, transcript: question),
-    );
+    emit(state.copyWith(status: VoiceStatus.processing, transcript: question));
 
     final VoiceReply answer;
     try {

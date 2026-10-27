@@ -1,3 +1,5 @@
+import 'package:plant_health/features/voice_assistant/presentation/voice_guide.dart';
+import 'package:plant_health/core/di/injection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:plant_health/core/navigation/app_router.dart';
@@ -16,6 +18,15 @@ class _SignupPageState extends State<SignupPage> {
   final _userNameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Explain the screen aloud once it is visible.
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => getIt<VoiceGuide>().announce(GuideScreen.signup),
+    );
+  }
 
   @override
   void dispose() {
@@ -127,20 +138,28 @@ class _SignupPageState extends State<SignupPage> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            'সাইনআপ করুন',
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.headlineSmall
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF1E4926),
-                                ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'সাইনআপ করুন',
+                                style: Theme.of(context).textTheme.headlineSmall
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      color: const Color(0xFF1E4926),
+                                    ),
+                              ),
+                              const VoiceGuideButton(
+                                screen: GuideScreen.signup,
+                                color: Color(0xFF1E4926),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 20),
                           TextFormField(
                             controller: _userNameController,
                             decoration: const InputDecoration(
-                              labelText: 'User Name',
+                              labelText: 'আপনার নাম',
                               prefixIcon: Icon(Icons.person_outline_rounded),
                             ),
                             validator: (value) {
@@ -155,7 +174,7 @@ class _SignupPageState extends State<SignupPage> {
                             controller: _phoneController,
                             keyboardType: TextInputType.phone,
                             decoration: const InputDecoration(
-                              labelText: 'Phone Number',
+                              labelText: 'ফোন নম্বর',
                               prefixIcon: Icon(Icons.phone_android_rounded),
                             ),
                             validator: (value) {
@@ -170,7 +189,7 @@ class _SignupPageState extends State<SignupPage> {
                             controller: _passwordController,
                             obscureText: true,
                             decoration: const InputDecoration(
-                              labelText: 'Password',
+                              labelText: 'পাসওয়ার্ড',
                               prefixIcon: Icon(Icons.lock_outline_rounded),
                             ),
                             validator: (value) {

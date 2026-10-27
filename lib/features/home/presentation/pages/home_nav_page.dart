@@ -10,10 +10,11 @@ import 'package:plant_health/core/navigation/app_router.dart';
 import 'package:plant_health/core/resources/strings.dart';
 import 'package:plant_health/features/agro_products/presentation/pages/agro_products_page.dart';
 import 'package:plant_health/features/auth/presentation/pages/profile_page.dart';
-import 'package:plant_health/features/plant_detection/presentation/pages/plant_detection_page.dart';
+import 'package:plant_health/features/rice_diagnosis/presentation/pages/rice_diagnosis_page.dart';
 import 'package:plant_health/features/voice_assistant/data/local_command_responder.dart';
 import 'package:plant_health/features/voice_assistant/domain/voice_responder.dart';
 import 'package:plant_health/features/voice_assistant/presentation/cubit/voice_assistant_cubit.dart';
+import 'package:plant_health/features/voice_assistant/presentation/voice_guide.dart';
 import 'package:plant_health/features/voice_assistant/presentation/widgets/voice_assistant_panel.dart';
 import 'package:plant_health/services/weather_service.dart';
 
@@ -43,7 +44,18 @@ class _HomeNavPageState extends State<HomeNavPage> {
   void initState() {
     super.initState();
     _voiceActions; // start listening now, not on first access
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => getIt<VoiceGuide>().announce(GuideScreen.home),
+    );
   }
+
+  static const _tabGuides = [
+    GuideScreen.home,
+    GuideScreen.advice,
+    GuideScreen.diagnosis,
+    GuideScreen.products,
+    GuideScreen.profile,
+  ];
 
   void _openForVoice(VoiceAction action) {
     _controller.jumpToTab(switch (action) {
@@ -65,7 +77,9 @@ class _HomeNavPageState extends State<HomeNavPage> {
     return const [
       _HomeOverviewTab(),
       _AdviceTab(),
-      PlantDetectionPage(),
+      // On-device model; replaces the Gemini photo check, which invented
+      // medicine names and doses.
+      RiceDiagnosisPage(),
       AgroProductsPage(),
       ProfilePage(),
     ];
@@ -144,6 +158,7 @@ class _HomeNavPageState extends State<HomeNavPage> {
     return PersistentTabView(
       context,
       controller: _controller,
+      onItemSelected: (i) => getIt<VoiceGuide>().announce(_tabGuides[i]),
       screens: _buildScreens(),
       items: _navBarsItems(context),
       navBarHeight: 68,
@@ -192,7 +207,11 @@ class _HomeOverviewTabState extends State<_HomeOverviewTab> {
       appBar: AppBar(
         elevation: 0,
         title: const Text(AppStrings.appName),
-        actions: const [_NotificationBellButton(), SizedBox(width: 4)],
+        actions: const [
+          VoiceGuideButton(screen: GuideScreen.home),
+          _NotificationBellButton(),
+          SizedBox(width: 4),
+        ],
       ),
       body: Container(
         width: double.infinity,

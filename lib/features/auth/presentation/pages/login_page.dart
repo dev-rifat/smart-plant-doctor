@@ -1,3 +1,5 @@
+import 'package:plant_health/features/voice_assistant/presentation/voice_guide.dart';
+import 'package:plant_health/core/di/injection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:plant_health/core/navigation/app_router.dart';
@@ -15,6 +17,15 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Explain the screen aloud once it is visible.
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => getIt<VoiceGuide>().announce(GuideScreen.login),
+    );
+  }
 
   @override
   void dispose() {
@@ -129,21 +140,29 @@ class _LoginPageState extends State<LoginPage> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            'লগইন করুন',
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.headlineSmall
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF1E4926),
-                                ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'লগইন করুন',
+                                style: Theme.of(context).textTheme.headlineSmall
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      color: const Color(0xFF1E4926),
+                                    ),
+                              ),
+                              const VoiceGuideButton(
+                                screen: GuideScreen.login,
+                                color: Color(0xFF1E4926),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 20),
                           TextFormField(
                             controller: _phoneController,
                             keyboardType: TextInputType.phone,
                             decoration: const InputDecoration(
-                              labelText: 'Phone Number',
+                              labelText: 'ফোন নম্বর',
                               prefixIcon: Icon(Icons.phone_android_rounded),
                             ),
                             validator: (value) {
@@ -158,7 +177,7 @@ class _LoginPageState extends State<LoginPage> {
                             controller: _passwordController,
                             obscureText: true,
                             decoration: const InputDecoration(
-                              labelText: 'Password',
+                              labelText: 'পাসওয়ার্ড',
                               prefixIcon: Icon(Icons.lock_outline_rounded),
                             ),
                             validator: (value) {
