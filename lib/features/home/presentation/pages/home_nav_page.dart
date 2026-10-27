@@ -1,10 +1,20 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
+import 'package:plant_health/core/di/injection.dart';
+import 'package:plant_health/core/services/voice_input_service.dart';
+import 'package:plant_health/core/services/voice_output_service.dart';
 import 'package:plant_health/core/navigation/app_router.dart';
 import 'package:plant_health/core/resources/strings.dart';
 import 'package:plant_health/features/agro_products/presentation/pages/agro_products_page.dart';
 import 'package:plant_health/features/auth/presentation/pages/profile_page.dart';
 import 'package:plant_health/features/plant_detection/presentation/pages/plant_detection_page.dart';
+import 'package:plant_health/features/voice_assistant/data/local_command_responder.dart';
+import 'package:plant_health/features/voice_assistant/domain/voice_responder.dart';
+import 'package:plant_health/features/voice_assistant/presentation/cubit/voice_assistant_cubit.dart';
+import 'package:plant_health/features/voice_assistant/presentation/widgets/voice_assistant_panel.dart';
 import 'package:plant_health/services/weather_service.dart';
 
 class HomeNavPage extends StatefulWidget {
@@ -18,6 +28,38 @@ class _HomeNavPageState extends State<HomeNavPage> {
   final PersistentTabController _controller = PersistentTabController(
     initialIndex: 0,
   );
+
+  // Lives above the tabs so an answer keeps playing when a voice command
+  // switches tab ("রোগ পরীক্ষা করো" → scan tab).
+  late final VoiceAssistantCubit _voice = VoiceAssistantCubit(
+    getIt<VoiceInputService>(),
+    getIt<VoiceOutputService>(),
+    LocalCommandResponder(const WeatherService()),
+  );
+  late final StreamSubscription<VoiceAction> _voiceActions = _voice.actions
+      .listen(_openForVoice);
+
+  @override
+  void initState() {
+    super.initState();
+    _voiceActions; // start listening now, not on first access
+  }
+
+  void _openForVoice(VoiceAction action) {
+    _controller.jumpToTab(switch (action) {
+      VoiceAction.openDiseaseCheck => 2,
+      VoiceAction.openProducts => 3,
+      VoiceAction.openProfile => 4,
+    });
+  }
+
+  @override
+  void dispose() {
+    _voiceActions.cancel();
+    _voice.close();
+    _controller.dispose();
+    super.dispose();
+  }
 
   List<Widget> _buildScreens() {
     return const [
@@ -95,6 +137,10 @@ class _HomeNavPageState extends State<HomeNavPage> {
 
   @override
   Widget build(BuildContext context) {
+    return BlocProvider.value(value: _voice, child: _buildTabs(context));
+  }
+
+  Widget _buildTabs(BuildContext context) {
     return PersistentTabView(
       context,
       controller: _controller,
@@ -160,6 +206,8 @@ class _HomeOverviewTabState extends State<_HomeOverviewTab> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            const VoiceAssistantPanel(),
+            const SizedBox(height: 16),
             const _OverviewHeroCard(),
             const SizedBox(height: 16),
             _WeatherUpdateCard(
