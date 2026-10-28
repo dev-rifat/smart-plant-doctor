@@ -13,8 +13,6 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
-  static const _primaryColor = Color(0xFF3F8D46);
-
   late final AnimationController _controller;
   late final Animation<double> _fadeAnimation;
   bool _isLoggedIn = false;
@@ -69,29 +67,6 @@ class _SplashScreenState extends State<SplashScreen>
     super.dispose();
   }
 
-  void _navigate(String route) {
-    if (!mounted) return;
-    Navigator.pushReplacementNamed(context, route);
-  }
-
-  void _handleLogin() => _navigate(AppRouter.login);
-
-  ButtonStyle get _buttonStyle => ElevatedButton.styleFrom(
-    backgroundColor: _primaryColor,
-    foregroundColor: Colors.white,
-    padding: const EdgeInsets.symmetric(vertical: 15),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-    textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-  );
-
-  ButtonStyle get _outlineButtonStyle => OutlinedButton.styleFrom(
-    foregroundColor: _primaryColor,
-    side: const BorderSide(color: _primaryColor, width: 1.5),
-    padding: const EdgeInsets.symmetric(vertical: 15),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-    textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-  );
-
   @override
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
@@ -135,41 +110,29 @@ class _SplashScreenState extends State<SplashScreen>
             alignment: Alignment.bottomCenter,
             child: FadeTransition(
               opacity: _fadeAnimation,
-              child: Container(
-                width: double.infinity,
-                padding: EdgeInsets.fromLTRB(24, 28, 24, bottomPadding + 28),
-                decoration: BoxDecoration(
-                  color: _isLoggedIn ? Colors.transparent : Colors.white,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(32),
-                  ),
-                ),
-                child: Column(
+              // No buttons: the app moves on by itself (voice setup or home),
+              // so a farmer who can't read has nothing to choose here.
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(24, 0, 24, bottomPadding + 48),
+                child: const Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (_isLoggedIn) ...[
-                      const _LoaderSection(),
-                    ] else ...[
-                      const _BottomTextSection(),
-                      const SizedBox(height: 22),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _handleLogin,
-                          style: _buttonStyle,
-                          child: const Text('লগইন করুন'),
-                        ),
+                    Text(
+                      'আসসালামু আলাইকুম',
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
                       ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton(
-                          onPressed: () => _navigate(AppRouter.register),
-                          style: _outlineButtonStyle,
-                          child: const Text('নতুন অ্যাকাউন্ট তৈরি করুন'),
-                        ),
-                      ),
-                    ],
+                    ),
+                    SizedBox(height: 6),
+                    Text(
+                      'আপনার ফসলের খোঁজ নিতে কৃষিসাথী আসছে…',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 17, color: Color(0xE6E8F5E9)),
+                    ),
+                    SizedBox(height: 22),
+                    _LoaderSection(),
                   ],
                 ),
               ),
@@ -194,7 +157,7 @@ class _HeaderSection extends StatelessWidget {
             _LogoBox(),
             SizedBox(width: 10),
             Text(
-              'স্মার্ট কৃষি',
+              'কৃষিসাথী',
               style: TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.w800,
@@ -206,7 +169,7 @@ class _HeaderSection extends StatelessWidget {
         ),
         SizedBox(height: 10),
         Text(
-          'AI-চালিত ফসল বিশ্লেষণ ও রোগ নির্ণয়',
+          'কথা বলুন, ছবি দিন — ধানের যত্নে আপনার সাথী',
           style: TextStyle(fontSize: 14, color: Color(0xCCE8F5E9)),
         ),
       ],
@@ -231,33 +194,6 @@ class _LogoBox extends StatelessWidget {
   }
 }
 
-class _BottomTextSection extends StatelessWidget {
-  const _BottomTextSection();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Column(
-      children: [
-        Text(
-          'আপনার ফসল রক্ষা করুন',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF1E4926),
-          ),
-          textAlign: TextAlign.center,
-        ),
-        SizedBox(height: 6),
-        Text(
-          'ছবি তুলুন, রোগ চিহ্নিত করুন,\nবিশেষজ্ঞ পরামর্শ নিন।',
-          style: TextStyle(fontSize: 13, color: Color(0xFF4A7C59)),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
-}
-
 class _LoaderSection extends StatelessWidget {
   const _LoaderSection();
 
@@ -270,7 +206,7 @@ class _LoaderSection extends StatelessWidget {
           height: 34,
           child: CircularProgressIndicator(
             strokeWidth: 3,
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3F8D46)),
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFBFE3B4)),
           ),
         ),
       ],

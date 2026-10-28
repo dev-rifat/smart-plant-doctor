@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -107,8 +109,10 @@ class OnboardingCubit extends Cubit<OnboardingState> {
 
   Future<void> start() async {
     // An account is nice to have (cloud backup), never a blocker: the
-    // profile is kept on the phone if sign-in isn't possible.
-    await _profiles.ensureSignedIn();
+    // profile is kept on the phone if sign-in isn't possible. Sign-in runs
+    // in the background - offline it can take long, and the farmer should
+    // hear the welcome at once (save() signs in again if needed).
+    unawaited(_profiles.ensureSignedIn());
     await _ask(SetupStep.name, welcome);
   }
 

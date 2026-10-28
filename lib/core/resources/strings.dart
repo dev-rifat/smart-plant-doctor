@@ -3,7 +3,7 @@
 
 class AppStrings {
   // App Name
-  static const String appName = 'স্মার্ট কৃষি';
+  static const String appName = 'কৃষিসাথী';
 
   // Home Screen
   static const String home = 'Home';
