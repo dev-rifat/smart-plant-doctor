@@ -5,21 +5,17 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:plant_health/core/services/voice_input_service.dart';
 import 'package:plant_health/core/services/voice_output_service.dart';
-import 'package:plant_health/features/face_login/data/face_embedder.dart';
-import 'package:plant_health/features/face_login/presentation/login_cubit.dart'
-    show LoginCubit;
-import 'package:plant_health/features/onboarding/data/farmer_profile_repository.dart';
 import 'package:plant_health/features/onboarding/domain/bangla_answers.dart';
+import 'package:plant_health/features/voice_login/data/farmer_account_repository.dart';
 
-/// Questions of the voice setup, in order.
+/// Questions of the voice signup, in order.
 enum SetupStep {
   name,
   confirmName,
-  district,
-  crop,
   phone,
   confirmPhone,
-  face,
+  password,
+  district,
   saving,
   done,
   failed,
@@ -35,11 +31,10 @@ class OnboardingState extends Equatable {
     this.heard = '',
     this.hint,
     this.name,
-    this.district,
-    this.crop,
     this.phone,
-    this.face,
-    this.cameraRequest = 0,
+    this.password,
+    this.district,
+    this.phoneTaken = false,
     this.voiceProblem = false,
   });
 
@@ -56,15 +51,12 @@ class OnboardingState extends Equatable {
   final String? hint;
 
   final String? name;
-  final String? district;
-  final String? crop;
   final String? phone;
+  final String? password;
+  final String? district;
 
-  /// Embedding of the signup face photo, for face login later.
-  final List<double>? face;
-
-  /// Bumped when the assistant wants the camera opened on its own.
-  final int cameraRequest;
+  /// The number already has an account: offer "লগইন করুন".
+  final bool phoneTaken;
 
   /// The phone's recognizer keeps failing on Bangla: show the settings fix.
   final bool voiceProblem;
@@ -76,11 +68,10 @@ class OnboardingState extends Equatable {
     String? heard,
     String? hint,
     String? name,
-    String? district,
-    String? crop,
     String? phone,
-    List<double>? face,
-    int? cameraRequest,
+    String? password,
+    String? district,
+    bool? phoneTaken,
     bool? voiceProblem,
   }) => OnboardingState(
     step: step ?? this.step,
@@ -89,11 +80,10 @@ class OnboardingState extends Equatable {
     heard: heard ?? this.heard,
     hint: hint,
     name: name ?? this.name,
-    district: district ?? this.district,
-    crop: crop ?? this.crop,
     phone: phone ?? this.phone,
-    face: face ?? this.face,
-    cameraRequest: cameraRequest ?? this.cameraRequest,
+    password: password ?? this.password,
+    district: district ?? this.district,
+    phoneTaken: phoneTaken ?? this.phoneTaken,
     voiceProblem: voiceProblem ?? this.voiceProblem,
   );
 
@@ -105,28 +95,27 @@ class OnboardingState extends Equatable {
     heard,
     hint,
     name,
-    district,
-    crop,
     phone,
-    face,
-    cameraRequest,
+    password,
+    district,
+    phoneTaken,
     voiceProblem,
   ];
 }
 
-/// Assistant-led setup: it asks, listens on its own, confirms, moves on.
-/// Every question can also be answered by typing or tapping a chip.
+/// Assistant-led signup: name, mobile number, password, district. It asks,
+/// listens on its own, confirms, moves on. Every question can also be
+/// answered by typing or tapping.
 ///
 /// Listening is bounded: one answer per question, and after two silent
 /// tries it stops and waits for a tap instead of keeping the mic open.
 class OnboardingCubit extends Cubit<OnboardingState> {
-  OnboardingCubit(this._input, this._output, this._profiles, this._faces)
+  OnboardingCubit(this._input, this._output, this._accounts)
     : super(const OnboardingState());
 
   final VoiceInputService _input;
   final VoiceOutputService _output;
-  final FarmerProfileRepository _profiles;
-  final FaceEmbedder _faces;
+  final FarmerAccountRepository _accounts;
 
   /// Bumped when the farmer types/taps, so a listen still in flight for the
   /// same question is ignored.
@@ -137,20 +126,17 @@ class OnboardingCubit extends Cubit<OnboardingState> {
   bool _toldFix = false;
 
   static const welcome =
-      'আসসালামু আলাইকুম! কৃষিসাথীতে আপনাকে স্বাগতম। আমি আপনার সাথে কথা বলে '
-      'সব কাজ করে দেব, কিছু লিখতে হবে না। প্রথমে আপনার নাম বলুন।';
+      'আসসালামু আলাইকুম! কৃষিসাথীতে আপনাকে স্বাগতম। চলুন আপনার অ্যাকাউন্ট '
+      'খুলি। প্রথমে আপনার নাম বলুন।';
 
   static const voiceFixMessage =
       'এই ফোনে এখন বাংলা কথা বোঝা যাচ্ছে না। নিচে লিখে বা বোতাম চেপে উত্তর দিন।';
 
-  Future<void> start() async {
-    // An account is nice to have (cloud backup), never a blocker: the
-    // profile is kept on the phone if sign-in isn't possible. Sign-in runs
-    // in the background - offline it can take long, and the farmer should
-    // hear the welcome at once (save() signs in again if needed).
-    unawaited(_profiles.ensureSignedIn());
-    await _ask(SetupStep.name, welcome);
-  }
+  static const passwordPrompt =
+      'এবার একটি পাসওয়ার্ড বলুন বা লিখুন। যেকোনো শব্দ বা সংখ্যা হতে পারে, '
+      'যেমন আপনার গ্রামের নাম। এটি মনে রাখবেন, লগইনে লাগবে।';
+
+  Future<void> start() => _ask(SetupStep.name, welcome);
 
   /// A typed or tapped answer - same path as a spoken one.
   Future<void> answer(String text) async {
@@ -261,36 +247,9 @@ class OnboardingCubit extends Cubit<OnboardingState> {
         }
         if (!yes) return _ask(SetupStep.name, 'ঠিক আছে, আবার আপনার নাম বলুন।');
         return _ask(
-          SetupStep.district,
-          'ধন্যবাদ ${state.name}। আপনি কোন জেলায় থাকেন?',
+          SetupStep.phone,
+          'ধন্যবাদ ${state.name}। এবার আপনার মোবাইল নম্বর বলুন।',
         );
-
-      case SetupStep.district:
-        final district = BanglaAnswers.district(text);
-        if (district == null) {
-          return _ask(
-            SetupStep.district,
-            'শুধু জেলার নাম বলুন, যেমন রংপুর বা বগুড়া।',
-            hint: 'জেলার নাম বুঝতে পারিনি।',
-          );
-        }
-        emit(state.copyWith(district: district));
-        return _ask(
-          SetupStep.crop,
-          '$district জেলা। আপনি প্রধানত কোন ফসল চাষ করেন? যেমন ধান, গম বা পাট।',
-        );
-
-      case SetupStep.crop:
-        final crop = BanglaAnswers.crop(text);
-        if (crop == null) {
-          return _ask(
-            SetupStep.crop,
-            'ফসলের নাম বলুন, যেমন ধান।',
-            hint: 'ফসলের নাম বুঝতে পারিনি।',
-          );
-        }
-        emit(state.copyWith(crop: crop));
-        return _ask(SetupStep.phone, 'লগইনের জন্য আপনার মোবাইল নম্বর বলুন।');
 
       case SetupStep.phone:
         final phone = BanglaAnswers.phone(text);
@@ -301,7 +260,7 @@ class OnboardingCubit extends Cubit<OnboardingState> {
             hint: 'নম্বর বুঝতে পারিনি।',
           );
         }
-        emit(state.copyWith(phone: phone));
+        emit(state.copyWith(phone: phone, phoneTaken: false));
         return _ask(
           SetupStep.confirmPhone,
           'আপনার নম্বর ${BanglaAnswers.spokenPhone(phone)}, ঠিক তো? '
@@ -316,100 +275,74 @@ class OnboardingCubit extends Cubit<OnboardingState> {
         if (!yes) {
           return _ask(SetupStep.phone, 'ঠিক আছে, আবার নম্বরটি বলুন।');
         }
-        return _askFace(faceIntro);
+        return _ask(SetupStep.password, passwordPrompt);
 
-      case SetupStep.face ||
-          SetupStep.saving ||
-          SetupStep.done ||
-          SetupStep.failed:
+      case SetupStep.password:
+        final password = text.trim();
+        if (PasswordHash.normalize(password).isEmpty) {
+          return _ask(
+            SetupStep.password,
+            passwordPrompt,
+            hint: 'পাসওয়ার্ড পাইনি।',
+          );
+        }
+        emit(state.copyWith(password: password));
+        return _ask(
+          SetupStep.district,
+          'পাসওয়ার্ড রাখা হলো। শেষ প্রশ্ন: আপনি কোন জেলায় থাকেন? '
+          'এতে আপনার এলাকার আবহাওয়া জানাতে পারব।',
+        );
+
+      case SetupStep.district:
+        final district = BanglaAnswers.district(text);
+        if (district == null) {
+          return _ask(
+            SetupStep.district,
+            'শুধু জেলার নাম বলুন, যেমন রংপুর বা বগুড়া।',
+            hint: 'জেলার নাম বুঝতে পারিনি।',
+          );
+        }
+        emit(state.copyWith(district: district));
+        return _save();
+
+      case SetupStep.saving || SetupStep.done || SetupStep.failed:
         return;
     }
   }
 
-  static const faceIntro =
-      'শেষ ধাপ: আপনার মুখের একটি ছবি তুলব। পরে মুখ দেখিয়েই লগইন করতে '
-      'পারবেন। ফোনটি মুখের সামনে ধরুন।';
-
-  /// Speaks, then asks the page to open the camera; no listening here.
-  Future<void> _askFace(String prompt, {String? hint}) async {
-    final turn = ++_turn;
-    await _input.stop();
-    emit(
-      state.copyWith(
-        step: SetupStep.face,
-        prompt: prompt,
-        hint: hint,
-        heard: '',
-        mic: SetupMic.speaking,
-      ),
-    );
-    await _output.speak(hint == null ? prompt : '$hint $prompt');
-    if (isClosed || turn != _turn) return;
-    emit(
-      state.copyWith(
-        mic: SetupMic.idle,
-        hint: hint,
-        cameraRequest: state.cameraRequest + 1,
-      ),
-    );
-  }
-
-  /// The signup face photo was taken.
-  Future<void> faceTaken(String photoPath) async {
-    if (state.step != SetupStep.face) return;
-    _turn++;
-    await _output.stop();
-    emit(state.copyWith(mic: SetupMic.idle, prompt: 'ছবি দেখছি…'));
-    final FaceScan scan;
-    try {
-      scan = await _faces.scan(photoPath);
-    } catch (e) {
-      debugPrint('🙂 Face scan failed: $e');
-      return _askFace(_faceRetake, hint: 'ছবিটি পড়া যায়নি।');
-    }
-    if (isClosed) return;
-    final problem = scan.problem;
-    if (problem != null) {
-      return _askFace(_faceRetake, hint: LoginCubit.faceProblemText(problem));
-    }
-    emit(state.copyWith(face: scan.embedding));
-    return _save();
-  }
-
-  static const _faceRetake = 'আলোর দিকে মুখ করে, সোজা তাকিয়ে আবার ছবি তুলুন।';
-
-  /// "এখন না": sign up without a face; login then uses the phone number.
-  Future<void> skipFace() async {
-    if (state.step != SetupStep.face) return;
-    _turn++;
-    await _output.stop();
-    return _save();
-  }
-
   Future<void> _save() async {
+    _turn++;
     emit(
       state.copyWith(
         step: SetupStep.saving,
         mic: SetupMic.idle,
-        prompt: 'সংরক্ষণ করছি…',
+        prompt: 'অ্যাকাউন্ট খুলছি…',
       ),
     );
     try {
-      await _profiles.save(
-        FarmerProfile(
-          name: state.name!,
-          district: state.district!,
-          primaryCrop: state.crop!,
-          phone: state.phone,
-          face: state.face,
-        ),
+      await _accounts.signUp(
+        name: state.name!,
+        phone: state.phone!,
+        password: state.password!,
+        district: state.district!,
       );
+    } on AccountException catch (e) {
+      if (e.problem == AccountProblem.phoneTaken) {
+        emit(state.copyWith(phoneTaken: true));
+        return _ask(
+          SetupStep.phone,
+          'অন্য নম্বর বলুন, অথবা নিচে "লগইন করুন" চাপুন।',
+          hint: e.bangla,
+        );
+      }
+      return _fail(e.bangla);
     } catch (e) {
-      debugPrint('👤 Profile save failed: $e');
-      return _fail('তথ্য সংরক্ষণ করা যায়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।');
+      debugPrint('👤 Signup failed: $e');
+      return _fail(const AccountException(AccountProblem.unknown).bangla);
     }
     final done =
-        'ধন্যবাদ ${state.name}! আপনার তথ্য রাখা হয়েছে। এখন মূল পাতায় যাচ্ছি।';
+        'ধন্যবাদ ${state.name}! আপনার অ্যাকাউন্ট খোলা হয়েছে। '
+        'পরে লগইন করতে মোবাইল নম্বর আর পাসওয়ার্ড লাগবে। এখন মূল পাতায় যাচ্ছি।';
     emit(
       state.copyWith(
         step: SetupStep.done,
@@ -433,8 +366,15 @@ class OnboardingCubit extends Cubit<OnboardingState> {
     if (!isClosed) emit(state.copyWith(mic: SetupMic.idle));
   }
 
-  /// Start over after a failure.
+  /// After a failure: the answers are kept, so only the account is tried
+  /// again (e.g. once the internet is back).
   Future<void> retry() async {
+    if (state.name != null &&
+        state.phone != null &&
+        state.password != null &&
+        state.district != null) {
+      return _save();
+    }
     emit(const OnboardingState());
     await start();
   }

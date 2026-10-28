@@ -43,7 +43,7 @@ class _ProfilePageState extends State<ProfilePage> {
         (user?.displayName?.trim().isNotEmpty == true
             ? user!.displayName!
             : 'ব্যবহারকারী');
-    final phoneNumber = _phoneFromEmail(user?.email);
+    final phoneNumber = farmer?.phone ?? _phoneFromEmail(user?.email);
 
     return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
@@ -145,7 +145,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 const SizedBox(height: 10),
                                 _ProfileInfoTile(
                                   icon: Icons.phone_android_rounded,
-                                  title: 'মোবাইল নাম্বার',
+                                  title: 'মোবাইল নম্বর',
                                   value: phoneNumber,
                                 ),
                               ],
@@ -204,9 +204,7 @@ class _ProfilePageState extends State<ProfilePage> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('লগআউট করবেন?'),
-        content: const Text(
-          'আবার ঢুকতে মুখের ছবি তুলতে হবে, অথবা মোবাইল নম্বর বলতে হবে।',
-        ),
+        content: const Text('আবার ঢুকতে মোবাইল নম্বর ও পাসওয়ার্ড লাগবে।'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),

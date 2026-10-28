@@ -5,9 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:plant_health/core/services/voice_input_service.dart';
 import 'package:plant_health/core/services/voice_output_service.dart';
-import 'package:plant_health/features/face_login/data/face_embedder.dart';
-import 'package:plant_health/features/onboarding/data/farmer_profile_repository.dart';
 import 'package:plant_health/features/onboarding/presentation/cubit/onboarding_cubit.dart';
+import 'package:plant_health/features/voice_login/data/farmer_account_repository.dart';
 
 /// Answers each listenOnce() with the next scripted result.
 class _ScriptedEars extends VoiceInputService {
@@ -51,33 +50,29 @@ class _Mouth extends VoiceOutputService {
   Future<void> stop() async {}
 }
 
-class _Profiles extends Fake implements FarmerProfileRepository {
-  _Profiles({this.canSignIn = true});
+/// Records the signup; [failures] are thrown by the next attempts.
+class _Accounts extends Fake implements FarmerAccountRepository {
+  _Accounts([List<AccountProblem> failures = const []])
+    : _failures = Queue.of(failures);
 
-  final bool canSignIn;
-  FarmerProfile? saved;
-
-  @override
-  Future<String?> ensureSignedIn() async => canSignIn ? 'uid' : null;
-
-  @override
-  Future<void> save(FarmerProfile p) async => saved = p;
-}
-
-/// Returns the next scripted scan for each photo.
-class _Faces implements FaceEmbedder {
-  _Faces([List<FaceScan>? scans])
-    : _scans = Queue.of(
-        scans ??
-            const [
-              FaceScan.face([1, 0]),
-            ],
-      );
-
-  final Queue<FaceScan> _scans;
+  final Queue<AccountProblem> _failures;
+  Map<String, String>? signedUp;
 
   @override
-  Future<FaceScan> scan(String photoPath) async => _scans.removeFirst();
+  Future<void> signUp({
+    required String name,
+    required String phone,
+    required String password,
+    required String district,
+  }) async {
+    if (_failures.isNotEmpty) throw AccountException(_failures.removeFirst());
+    signedUp = {
+      'name': name,
+      'phone': phone,
+      'password': password,
+      'district': district,
+    };
+  }
 }
 
 Future<void> _settle() async {
@@ -86,39 +81,42 @@ Future<void> _settle() async {
   }
 }
 
+const _byVoice = [
+  Heard.text('আমার নাম করিম'),
+  Heard.text('হ্যাঁ'),
+  Heard.text('শূন্য এক সাত এক দুই তিন চার পাঁচ ছয় সাত আট'),
+  Heard.text('হ্যাঁ'),
+  Heard.text('আম গাছ'),
+  Heard.text('আমি রংপুর থাকি'),
+];
+
+Future<void> _type(OnboardingCubit cubit, List<String> answers) async {
+  for (final typed in answers) {
+    unawaited(cubit.answer(typed));
+    await _settle();
+  }
+}
+
 void main() {
-  test('whole setup by voice, nothing typed', () async {
-    final profiles = _Profiles();
+  test('whole signup by voice: name, number, password, district', () async {
+    final accounts = _Accounts();
     final mouth = _Mouth();
-    final cubit = OnboardingCubit(
-      _ScriptedEars(const [
-        Heard.text('আমার নাম করিম'),
-        Heard.text('হ্যাঁ'),
-        Heard.text('আমি রংপুর থাকি'),
-        Heard.text('ধান'),
-        Heard.text('শূন্য এক সাত এক দুই তিন চার পাঁচ ছয় সাত আট'),
-        Heard.text('হ্যাঁ'),
-      ]),
-      mouth,
-      profiles,
-      _Faces(),
-    );
+    final cubit = OnboardingCubit(_ScriptedEars(_byVoice), mouth, accounts);
 
     unawaited(cubit.start()); // keeps listening for the next answer
     await _settle();
-    expect(cubit.state.step, SetupStep.face);
-    expect(cubit.state.cameraRequest, 1); // camera opens by itself
-    await cubit.faceTaken('photo.jpg');
 
     expect(cubit.state.step, SetupStep.done);
-    expect(profiles.saved?.phone, '01712345678');
-    expect(profiles.saved?.face, [1, 0]);
-    expect(profiles.saved?.name, 'করিম');
-    expect(profiles.saved?.district, 'রংপুর');
-    expect(profiles.saved?.primaryCrop, 'ধান');
+    expect(accounts.signedUp, {
+      'name': 'করিম',
+      'phone': '01712345678',
+      'password': 'আম গাছ',
+      'district': 'রংপুর',
+    });
     expect(mouth.said.first, OnboardingCubit.welcome);
     expect(mouth.said, contains(contains('করিম, ঠিক তো')));
-    expect(mouth.said.last, contains('ধন্যবাদ করিম'));
+    expect(mouth.said, contains(contains('০ ১ ৭ ১ ২')));
+    expect(mouth.said.last, contains('অ্যাকাউন্ট খোলা হয়েছে'));
   });
 
   test('"না" goes back and asks the name again', () async {
@@ -129,8 +127,7 @@ void main() {
         Heard.text('রহিম'),
       ]),
       _Mouth(),
-      _Profiles(),
-      _Faces(),
+      _Accounts(),
     );
     unawaited(cubit.start()); // keeps listening for the next answer
     await _settle();
@@ -144,7 +141,7 @@ void main() {
       Heard.failed(HeardFailure.silence),
     ]);
     final mouth = _Mouth();
-    final cubit = OnboardingCubit(ears, mouth, _Profiles(), _Faces());
+    final cubit = OnboardingCubit(ears, mouth, _Accounts());
 
     unawaited(cubit.start()); // keeps listening for the next answer
     await _settle();
@@ -159,7 +156,7 @@ void main() {
     final ears = _ScriptedEars(const [Heard.failed(HeardFailure.notUnderstood)])
       ..broken = true;
     final mouth = _Mouth();
-    final cubit = OnboardingCubit(ears, mouth, _Profiles(), _Faces());
+    final cubit = OnboardingCubit(ears, mouth, _Accounts());
 
     unawaited(cubit.start()); // keeps listening for the next answer
     await _settle();
@@ -168,72 +165,117 @@ void main() {
     expect(mouth.said.last, OnboardingCubit.voiceFixMessage);
   });
 
-  test('typed answers work without any voice', () async {
-    final profiles = _Profiles();
+  test('typed answers work without any voice; any password works', () async {
+    final accounts = _Accounts();
+    final cubit = OnboardingCubit(_ScriptedEars(const []), _Mouth(), accounts);
+    unawaited(cubit.start());
+    await _settle();
+
+    await _type(cubit, [
+      'সালমা',
+      'হ্যাঁ',
+      '01812345678',
+      'হ্যাঁ',
+      '1',
+      'বগুড়া',
+    ]);
+    expect(accounts.signedUp?['password'], '1');
+    expect(accounts.signedUp?['district'], 'বগুড়া');
+  });
+
+  test('wrong phone number: asks again, then reads it back', () async {
     final cubit = OnboardingCubit(
       _ScriptedEars(const []),
       _Mouth(),
-      profiles,
-      _Faces(),
+      _Accounts(),
     );
-    unawaited(cubit.start()); // keeps listening for the next answer
+    unawaited(cubit.start());
     await _settle();
+    await _type(cubit, ['করিম', 'হ্যাঁ', '১২৩']);
+    expect(cubit.state.step, SetupStep.phone);
+    expect(cubit.state.hint, 'নম্বর বুঝতে পারিনি।');
 
-    for (final typed in [
-      'সালমা',
-      'হ্যাঁ',
-      'বগুড়া',
-      'পাট',
-      '01812345678',
-      'হ্যাঁ',
-    ]) {
-      unawaited(cubit.answer(typed));
-      await _settle();
-    }
-    await cubit.skipFace(); // no photo: login will use the number
-    expect(profiles.saved?.phone, '01812345678');
-    expect(profiles.saved?.face, isNull);
-    expect(profiles.saved?.district, 'বগুড়া');
-    expect(profiles.saved?.primaryCrop, 'পাট');
+    await _type(cubit, ['০১৯১১২২২৩৩৩']);
+    expect(cubit.state.step, SetupStep.confirmPhone);
+    expect(cubit.state.prompt, contains('০ ১ ৯ ১ ১'));
+  });
+
+  test('empty password is asked again', () async {
+    final cubit = OnboardingCubit(
+      _ScriptedEars(const []),
+      _Mouth(),
+      _Accounts(),
+    );
+    unawaited(cubit.start());
+    await _settle();
+    await _type(cubit, ['করিম', 'হ্যাঁ', '01712345678', 'হ্যাঁ', '  ']);
+    expect(cubit.state.step, SetupStep.password);
+    expect(cubit.state.hint, 'পাসওয়ার্ড পাইনি।');
   });
 
   test('unknown district asks again with an example', () async {
     final cubit = OnboardingCubit(
-      _ScriptedEars(const [
-        Heard.text('করিম'),
-        Heard.text('হ্যাঁ'),
-        Heard.text('কলকাতা'),
-      ]),
+      _ScriptedEars(const []),
       _Mouth(),
-      _Profiles(),
-      _Faces(),
+      _Accounts(),
     );
-    unawaited(cubit.start()); // keeps listening for the next answer
+    unawaited(cubit.start());
     await _settle();
+    await _type(cubit, [
+      'করিম',
+      'হ্যাঁ',
+      '01712345678',
+      'হ্যাঁ',
+      'আম',
+      'কলকাতা',
+    ]);
     expect(cubit.state.step, SetupStep.district);
     expect(cubit.state.prompt, contains('যেমন রংপুর'));
   });
 
-  test('no account possible (anonymous off): setup still finishes', () async {
-    final profiles = _Profiles(canSignIn: false);
-    final cubit = OnboardingCubit(
-      _ScriptedEars(const [
-        Heard.text('করিম'),
-        Heard.text('হ্যাঁ'),
-        Heard.text('রংপুর'),
-        Heard.text('ধান'),
-        Heard.text('০১৭১২৩৪৫৬৭৮'),
-        Heard.text('হ্যাঁ'),
-      ]),
-      _Mouth(),
-      profiles,
-      _Faces(),
-    );
+  test(
+    'number already has an account: back to the number, offers login',
+    () async {
+      final cubit = OnboardingCubit(
+        _ScriptedEars(const []),
+        _Mouth(),
+        _Accounts(const [AccountProblem.phoneTaken]),
+      );
+      unawaited(cubit.start());
+      await _settle();
+      await _type(cubit, [
+        'করিম',
+        'হ্যাঁ',
+        '01712345678',
+        'হ্যাঁ',
+        'আম',
+        'রংপুর',
+      ]);
+      expect(cubit.state.step, SetupStep.phone);
+      expect(cubit.state.phoneTaken, isTrue);
+      expect(cubit.state.hint, contains('আগেই অ্যাকাউন্ট'));
+    },
+  );
+
+  test('no internet: says so; retry keeps the answers', () async {
+    final accounts = _Accounts(const [AccountProblem.network]);
+    final cubit = OnboardingCubit(_ScriptedEars(const []), _Mouth(), accounts);
     unawaited(cubit.start());
     await _settle();
-    await cubit.faceTaken('photo.jpg');
+    await _type(cubit, [
+      'করিম',
+      'হ্যাঁ',
+      '01712345678',
+      'হ্যাঁ',
+      'আম',
+      'রংপুর',
+    ]);
+    expect(cubit.state.step, SetupStep.failed);
+    expect(cubit.state.prompt, contains('ইন্টারনেট'));
+
+    await cubit.retry();
     expect(cubit.state.step, SetupStep.done);
-    expect(profiles.saved?.name, 'করিম');
+    expect(accounts.signedUp?['name'], 'করিম');
   });
 
   test(
@@ -243,7 +285,7 @@ void main() {
         Heard.failed(HeardFailure.notUnderstood),
       ])..broken = true;
       final mouth = _Mouth();
-      final cubit = OnboardingCubit(ears, mouth, _Profiles(), _Faces());
+      final cubit = OnboardingCubit(ears, mouth, _Accounts());
       unawaited(cubit.start());
       await _settle();
       expect(cubit.state.voiceProblem, isTrue);
@@ -259,59 +301,4 @@ void main() {
       );
     },
   );
-
-  test('face photo without a face: says why and asks again', () async {
-    final mouth = _Mouth();
-    final profiles = _Profiles();
-    final cubit = OnboardingCubit(
-      _ScriptedEars(const []),
-      mouth,
-      profiles,
-      _Faces(const [
-        FaceScan.failed(FaceProblem.noFace),
-        FaceScan.face([0, 1]),
-      ]),
-    );
-    unawaited(cubit.start());
-    await _settle();
-    for (final typed in [
-      'করিম',
-      'হ্যাঁ',
-      'রংপুর',
-      'ধান',
-      '01712345678',
-      'হ্যাঁ',
-    ]) {
-      unawaited(cubit.answer(typed));
-      await _settle();
-    }
-    await cubit.faceTaken('dark.jpg');
-    expect(cubit.state.step, SetupStep.face);
-    expect(cubit.state.cameraRequest, 2);
-    expect(mouth.said.last, startsWith('ছবিতে মুখ পাওয়া যায়নি।'));
-
-    await cubit.faceTaken('good.jpg');
-    expect(profiles.saved?.face, [0, 1]);
-  });
-
-  test('wrong phone number: asks again, then confirms', () async {
-    final cubit = OnboardingCubit(
-      _ScriptedEars(const []),
-      _Mouth(),
-      _Profiles(),
-      _Faces(),
-    );
-    unawaited(cubit.start());
-    await _settle();
-    for (final typed in ['করিম', 'হ্যাঁ', 'রংপুর', 'ধান', '১২৩']) {
-      unawaited(cubit.answer(typed));
-      await _settle();
-    }
-    expect(cubit.state.step, SetupStep.phone);
-    expect(cubit.state.hint, 'নম্বর বুঝতে পারিনি।');
-    unawaited(cubit.answer('০১৯১১২২২৩৩৩'));
-    await _settle();
-    expect(cubit.state.step, SetupStep.confirmPhone);
-    expect(cubit.state.prompt, contains('০ ১ ৯ ১ ১'));
-  });
 }

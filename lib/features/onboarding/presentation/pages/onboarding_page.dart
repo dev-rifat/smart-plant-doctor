@@ -6,12 +6,10 @@ import 'package:plant_health/core/services/phone_settings.dart';
 import 'package:plant_health/core/services/voice_input_service.dart';
 import 'package:plant_health/core/services/voice_output_service.dart';
 import 'package:plant_health/core/theme/app_colors.dart';
-import 'package:plant_health/features/face_login/data/face_embedder.dart';
-import 'package:plant_health/features/face_login/presentation/face_camera.dart';
-import 'package:plant_health/features/onboarding/data/farmer_profile_repository.dart';
 import 'package:plant_health/features/onboarding/domain/bangla_answers.dart';
 import 'package:plant_health/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:plant_health/features/onboarding/presentation/widgets/assistant_says.dart';
+import 'package:plant_health/features/voice_login/data/farmer_account_repository.dart';
 
 /// First launch: the assistant talks the farmer through setup. No password,
 /// nothing to read; typing and buttons are there only as a fallback.
@@ -24,8 +22,7 @@ class OnboardingPage extends StatelessWidget {
       create: (_) => OnboardingCubit(
         getIt<VoiceInputService>(),
         getIt<VoiceOutputService>(),
-        getIt<FarmerProfileRepository>(),
-        getIt<FaceEmbedder>(),
+        getIt<FarmerAccountRepository>(),
       )..start(),
       child: const _OnboardingView(),
     );
@@ -51,11 +48,6 @@ class _OnboardingView extends StatelessWidget {
             (_) => false,
           ),
         ),
-        // The assistant asked for the face photo: open the camera itself.
-        BlocListener<OnboardingCubit, OnboardingState>(
-          listenWhen: (a, b) => b.cameraRequest != a.cameraRequest,
-          listener: (context, _) => _takeFacePhoto(context),
-        ),
       ],
       child: Scaffold(
         backgroundColor: const Color(0xFFF4F9F4),
@@ -68,14 +60,7 @@ class _OnboardingView extends StatelessWidget {
                 const SizedBox(height: 24),
                 AssistantSays(state.prompt),
                 const SizedBox(height: 28),
-                if (state.step == SetupStep.face)
-                  FaceCameraButton(
-                    label: 'ছবি তুলুন',
-                    busy: state.prompt == 'ছবি দেখছি…',
-                    onPressed: () => _takeFacePhoto(context),
-                  )
-                else
-                  _MicIndicator(state: state),
+                _MicIndicator(state: state),
                 // Fixed height, so buttons below never jump when a hint
                 // appears or disappears (a farmer's tap would miss).
                 SizedBox(
@@ -85,7 +70,10 @@ class _OnboardingView extends StatelessWidget {
                     children: [
                       if (state.heard.isNotEmpty)
                         Text(
-                          'আপনি বললেন: "${state.heard}"',
+                          // Never show a spoken password.
+                          state.step == SetupStep.password
+                              ? 'পাসওয়ার্ড শোনা হয়েছে'
+                              : 'আপনি বললেন: "${state.heard}"',
                           textAlign: TextAlign.center,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -111,6 +99,36 @@ class _OnboardingView extends StatelessWidget {
                   const SizedBox(height: 16),
                   const _VoiceFixCard(),
                 ],
+                const SizedBox(height: 28),
+                // A farmer who already has an account (or whose number is
+                // taken) logs in instead.
+                if (state.step != SetupStep.saving &&
+                    state.step != SetupStep.done)
+                  state.phoneTaken
+                      ? FilledButton.icon(
+                          style: FilledButton.styleFrom(
+                            minimumSize: const Size.fromHeight(56),
+                          ),
+                          onPressed: () => Navigator.pushReplacementNamed(
+                            context,
+                            AppRouter.voiceLogin,
+                          ),
+                          icon: const Icon(Icons.login_rounded),
+                          label: const Text(
+                            'লগইন করুন',
+                            style: TextStyle(fontSize: 18),
+                          ),
+                        )
+                      : TextButton(
+                          onPressed: () => Navigator.pushReplacementNamed(
+                            context,
+                            AppRouter.voiceLogin,
+                          ),
+                          child: const Text(
+                            'আগে অ্যাকাউন্ট খুলেছেন? লগইন করুন',
+                            style: TextStyle(fontSize: 17),
+                          ),
+                        ),
               ],
             ),
           ),
@@ -118,12 +136,6 @@ class _OnboardingView extends StatelessWidget {
       ),
     );
   }
-}
-
-Future<void> _takeFacePhoto(BuildContext context) async {
-  final cubit = context.read<OnboardingCubit>();
-  final path = await takeFacePhoto(context);
-  if (path != null) await cubit.faceTaken(path);
 }
 
 class _Progress extends StatelessWidget {
@@ -135,13 +147,12 @@ class _Progress extends StatelessWidget {
   Widget build(BuildContext context) {
     final index = switch (step) {
       SetupStep.name || SetupStep.confirmName => 0,
-      SetupStep.district => 1,
-      SetupStep.crop => 2,
-      SetupStep.phone || SetupStep.confirmPhone => 3,
-      SetupStep.face => 4,
-      _ => 5,
+      SetupStep.phone || SetupStep.confirmPhone => 1,
+      SetupStep.password => 2,
+      SetupStep.district => 3,
+      _ => 4,
     };
-    const labels = ['নাম', 'জেলা', 'ফসল', 'মোবাইল', 'মুখ'];
+    const labels = ['নাম', 'মোবাইল', 'পাসওয়ার্ড', 'জেলা'];
     return Wrap(
       alignment: WrapAlignment.center,
       spacing: 6,
@@ -171,7 +182,7 @@ class _MicIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     final cubit = context.read<OnboardingCubit>();
     final busy = state.step == SetupStep.saving;
-    final (IconData icon, Color color, String label) = switch (state.mic) {
+    var (IconData icon, Color color, String label) = switch (state.mic) {
       SetupMic.speaking => (
         Icons.volume_up_rounded,
         AppColors.primaryDark,
@@ -188,6 +199,7 @@ class _MicIndicator extends StatelessWidget {
         'মাইক চেপে বলুন',
       ),
     };
+    if (busy) label = 'একটু অপেক্ষা করুন…';
     final canTap =
         state.mic == SetupMic.idle &&
         !busy &&
@@ -291,6 +303,7 @@ class _Fallback extends StatefulWidget {
 
 class _FallbackState extends State<_Fallback> {
   final _text = TextEditingController();
+  bool _hidden = true;
 
   @override
   void didUpdateWidget(_Fallback old) {
@@ -359,23 +372,6 @@ class _FallbackState extends State<_Fallback> {
             ),
           ],
         );
-      case SetupStep.crop:
-        return Wrap(
-          alignment: WrapAlignment.center,
-          spacing: 10,
-          runSpacing: 10,
-          children: [
-            for (final crop in BanglaAnswers.crops.keys)
-              ActionChip(
-                label: Text(crop, style: const TextStyle(fontSize: 19)),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
-                ),
-                onPressed: () => cubit.answer(crop),
-              ),
-          ],
-        );
       case SetupStep.name || SetupStep.district:
         final field = TextField(
           controller: _text,
@@ -426,12 +422,28 @@ class _FallbackState extends State<_Fallback> {
             ),
           ),
         );
-      case SetupStep.face:
-        return TextButton(
-          onPressed: cubit.skipFace,
-          child: const Text(
-            'এখন না, পরে (লগইন হবে মোবাইল নম্বরে)',
-            style: TextStyle(fontSize: 16),
+      case SetupStep.password:
+        return TextField(
+          controller: _text,
+          obscureText: _hidden,
+          keyboardType: TextInputType.visiblePassword,
+          style: const TextStyle(fontSize: 20),
+          onSubmitted: cubit.answer,
+          decoration: InputDecoration(
+            hintText: 'অথবা পাসওয়ার্ড লিখুন',
+            prefixIcon: IconButton(
+              tooltip: _hidden ? 'দেখান' : 'লুকান',
+              icon: Icon(
+                _hidden
+                    ? Icons.visibility_rounded
+                    : Icons.visibility_off_rounded,
+              ),
+              onPressed: () => setState(() => _hidden = !_hidden),
+            ),
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.send_rounded),
+              onPressed: () => cubit.answer(_text.text),
+            ),
           ),
         );
       case SetupStep.failed:

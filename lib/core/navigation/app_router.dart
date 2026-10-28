@@ -6,7 +6,7 @@ import 'package:plant_health/features/agro_products/presentation/pages/agro_prod
 import 'package:plant_health/features/auth/presentation/pages/login_page.dart';
 import 'package:plant_health/features/auth/presentation/pages/profile_page.dart';
 import 'package:plant_health/features/auth/presentation/pages/signup_page.dart';
-import 'package:plant_health/features/face_login/presentation/voice_login_page.dart';
+import 'package:plant_health/features/voice_login/presentation/voice_login_page.dart';
 import 'package:plant_health/features/home/presentation/pages/home_nav_page.dart';
 import 'package:plant_health/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:plant_health/features/plant_detection/presentation/pages/splash_screen.dart';

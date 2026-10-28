@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
@@ -20,6 +22,11 @@ class VoiceOutputService {
 
   Future<bool>? _initializing;
   String? _language;
+
+  /// Completed by the engine's error callback: on an error (e.g. -7, the
+  /// network voice failing) the plugin never reports completion, and
+  /// everything waiting for the sentence to end would wait forever.
+  Completer<void>? _failed;
 
   /// True while an answer is being read aloud, for the "speaking" indicator
   /// and the stop button.
@@ -53,6 +60,7 @@ class VoiceOutputService {
       _tts.setErrorHandler((message) {
         debugPrint('🔈 TTS error: $message');
         isSpeaking.value = false;
+        if (_failed?.isCompleted == false) _failed!.complete();
       });
       return true;
     } catch (e) {
@@ -68,14 +76,21 @@ class VoiceOutputService {
   /// Reads [text] aloud, cutting off whatever was playing. Completes when
   /// the utterance finishes or is stopped, so don't block UI on it.
   ///
-  /// Returns false if nothing was spoken (empty text or no Bangla voice).
+  /// Returns false if nothing was spoken (empty text, no Bangla voice, or
+  /// the engine failed).
   Future<bool> speak(String text) async {
     final trimmed = text.trim();
     if (trimmed.isEmpty || !await initialize()) return false;
 
     await _tts.stop();
-    await _tts.speak(trimmed);
-    return true;
+    final failed = _failed = Completer<void>();
+    // Ends on completion, stop, error - or, as a last resort, after far
+    // longer than the sentence could take.
+    await Future.any([_tts.speak(trimmed), failed.future]).timeout(
+      Duration(seconds: 5 + trimmed.length ~/ 8),
+      onTimeout: () => debugPrint('🔈 TTS gave no completion; moving on'),
+    );
+    return !failed.isCompleted;
   }
 
   Future<void> stop() async {

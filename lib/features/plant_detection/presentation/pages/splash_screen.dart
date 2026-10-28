@@ -47,23 +47,21 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<String> _nextRoute() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null && !user.isAnonymous) {
-      return AppRouter.home; // phone + password account
-    }
     try {
       final profiles = getIt<FarmerProfileRepository>();
-      final profile = await profiles.load();
-      if (profile == null) return AppRouter.onboarding;
-      // Stays logged in; after a logout, face or phone number login.
-      return await profiles.isLoggedIn()
-          ? AppRouter.home
-          : AppRouter.voiceLogin;
-    } catch (_) {
-      // load() reads the phone first, so it only fails when there is no
-      // local profile and the cloud is unreachable: set up again.
-      return AppRouter.onboarding;
+      if (await profiles.load() != null) {
+        // Stays logged in; after a logout, number + password again.
+        return await profiles.isLoggedIn()
+            ? AppRouter.home
+            : AppRouter.voiceLogin;
+      }
+    } catch (_) {}
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null && !user.isAnonymous) {
+      return AppRouter.home; // account from the earlier screens
     }
+    // New on this phone: signup, which also offers login.
+    return AppRouter.onboarding;
   }
 
   @override
