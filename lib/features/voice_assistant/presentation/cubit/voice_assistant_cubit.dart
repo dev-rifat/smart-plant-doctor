@@ -93,8 +93,8 @@ class VoiceAssistantCubit extends Cubit<VoiceAssistantState> {
   static const _nothingHeardMessage =
       'কোনো কথা শোনা যায়নি। মাইক চেপে আবার বলুন।';
   static const voiceFixMessage =
-      'এই ফোন বাংলা কথা বুঝতে পারছে না। "সেটিং খুলুন" চেপে ভয়েস ইনপুটে '
-      '"Google" বেছে নিন, অথবা নিচে লিখে প্রশ্ন করুন।';
+      'এই ফোন এখনো বাংলা কথা বোঝে না। "সেটিং খুলুন" চেপে তালিকা থেকে '
+      '"বাংলা" ডাউনলোড করুন, তারপর আবার মাইক চাপুন। অথবা নিচে লিখে প্রশ্ন করুন।';
 
   /// [quiet] is for listening the assistant started on its own (after a
   /// greeting or an answer): if the farmer says nothing it just goes idle,

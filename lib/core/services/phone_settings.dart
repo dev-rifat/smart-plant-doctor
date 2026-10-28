@@ -4,8 +4,9 @@ import 'package:flutter/services.dart';
 abstract final class PhoneSettings {
   static const _channel = MethodChannel('krishisathi/settings');
 
-  /// The "default voice input" screen (Android). Returns false if the phone
-  /// has no such screen or this isn't Android.
+  /// Where to fix Bangla speech recognition (Android): Speech Services'
+  /// language download screen, else the "default voice input" screen.
+  /// Returns false if neither exists or this isn't Android.
   static Future<bool> openVoiceInput() async {
     try {
       return await _channel.invokeMethod<bool>('openVoiceInputSettings') ??

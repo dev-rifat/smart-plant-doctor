@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
-import 'package:plant_health/core/services/google_voice_dialog.dart';
 import 'package:speech_to_text/speech_recognition_error.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
@@ -38,93 +36,12 @@ class VoiceInputService {
   int _noMatchStreak = 0;
 
   /// True after the recognizer repeatedly heard speech but understood none
-  /// of it - on phones whose default recognizer has no Bangla (e.g. the
-  /// offline "Speech Services by Google" without Bangla data) this is the
-  /// only symptom. The fix is a phone setting: default voice input → Google.
-  bool get banglaRecognitionLooksBroken =>
-      _noMatchStreak >= 2 && !Platform.isAndroid;
-
-  /// Android: listen through Google's speech dialog instead of the plugin.
-  /// Chosen up front when the default recognizer is the offline one without
-  /// Bangla, or after it keeps failing; null = not decided yet.
-  bool? _dialogMode;
-  Future<Heard>? _dialog;
-
-  Future<bool> _useDialog() async {
-    if (!Platform.isAndroid) return false;
-    if (_noMatchStreak >= 2) {
-      // Speech was heard twice but not understood: switch for good.
-      _noMatchStreak = 0;
-      _dialogMode = true;
-    }
-    return _dialogMode ??= await GoogleVoiceDialog.isNeeded();
-  }
-
-  Future<bool> _startWithDialog(
-    void Function(String text, bool isFinal) onText,
-    VoidCallback onStopped,
-  ) async {
-    _lastErrorCode = null;
-    // One request at a time: a second one while listening (e.g. a screen
-    // asking as it opens) shares the same answer instead of failing "busy".
-    final Heard heard;
-    try {
-      heard = await (_dialog ??= _listenGoogle().whenComplete(
-        () => _dialog = null,
-      ));
-    } on PlatformException catch (e) {
-      debugPrint('🎙️ Google speech unavailable: ${e.code}');
-      _dialogMode = false; // back to the plugin next time
-      return false;
-    }
-    final text = heard.text;
-    debugPrint('🎙️ Google heard: "${text ?? ''}" ${heard.failure ?? ''}');
-    if (text != null) {
-      onText(text, true);
-    } else {
-      _lastErrorCode = switch (heard.failure) {
-        HeardFailure.notUnderstood => 'error_no_match',
-        HeardFailure.network => 'error_network',
-        HeardFailure.unavailable => 'error_permission',
-        _ => 'error_speech_timeout',
-      };
-    }
-    onStopped();
-    return heard.failure != HeardFailure.unavailable;
-  }
-
-  /// The Google app's recognition service first (no dialog, online Bangla);
-  /// Google's speech dialog if that service can't be used on this phone.
-  Future<Heard> _listenGoogle() async {
-    // The service records for this app, so it needs our mic permission;
-    // the plugin's initialise asks for it.
-    if (!await initialize()) {
-      return const Heard.failed(HeardFailure.unavailable);
-    }
-    try {
-      final (text, error) = await GoogleVoiceDialog.listenGoogleService();
-      if (text != null && text.trim().isNotEmpty)
-        return Heard.text(text.trim());
-      switch (error) {
-        case 7: // ERROR_NO_MATCH
-          return const Heard.failed(HeardFailure.notUnderstood);
-        case 1 || 2 || 4: // network errors
-          return const Heard.failed(HeardFailure.network);
-        case 9: // ERROR_INSUFFICIENT_PERMISSIONS
-          return const Heard.failed(HeardFailure.unavailable);
-        case 5 || 8 || 10 || 11 || 12 || 13: // client/busy/not available
-          break; // fall through to the dialog
-        default: // 6 = speech timeout, null = nothing said
-          return const Heard.failed(HeardFailure.silence);
-      }
-    } on PlatformException catch (e) {
-      debugPrint('🎙️ Google recognition service unavailable: ${e.code}');
-    }
-    final text = await GoogleVoiceDialog.recognize();
-    return text != null && text.trim().isNotEmpty
-        ? Heard.text(text.trim())
-        : const Heard.failed(HeardFailure.silence);
-  }
+  /// of it. Field test (Redmi Note 12): the default recognizer was the
+  /// offline "Speech Services by Google" without Bangla; neither its dialog
+  /// nor the Google app's service (refused by Android: "not a
+  /// RecognitionService") could stand in. The fix is on the phone:
+  /// download Bangla for speech recognition - [PhoneSettings] opens it.
+  bool get banglaRecognitionLooksBroken => _noMatchStreak >= 2;
 
   /// Initialises the recognizer and asks for mic / speech permissions.
   /// Returns false if the device has no recognizer or permission is denied.
@@ -190,7 +107,7 @@ class VoiceInputService {
   /// Whether Bangla recognition is available. When false (some iOS
   /// devices), listening falls back to the device's default language and
   /// the AI assistant converts any romanised text back to Bangla.
-  bool get supportsBangla => _dialogMode == true || _banglaLocaleId != null;
+  bool get supportsBangla => _banglaLocaleId != null;
 
   /// Starts listening. [onText] fires for partial and final results so the
   /// text field can update live while the farmer is still speaking.
@@ -199,7 +116,6 @@ class VoiceInputService {
     required VoidCallback onStopped,
     void Function(String message)? onError,
   }) async {
-    if (await _useDialog()) return _startWithDialog(onText, onStopped);
     if (!await initialize()) return false;
 
     _lastErrorCode = null;

@@ -232,7 +232,7 @@ class _VoiceFixCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
-              'এই ফোন বাংলা কথা বুঝতে পারছে না। সেটিং খুলে ভয়েস ইনপুটে "Google" বেছে নিন, তারপর ফিরে এসে মাইক চাপুন।',
+              'এই ফোন এখনো বাংলা কথা বোঝে না। "সেটিং খুলুন" চেপে তালিকা থেকে "বাংলা" ডাউনলোড করুন, তারপর ফিরে এসে মাইক চাপুন।',
               style: TextStyle(fontSize: 17),
             ),
             const SizedBox(height: 12),

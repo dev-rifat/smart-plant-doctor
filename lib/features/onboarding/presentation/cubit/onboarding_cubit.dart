@@ -104,8 +104,8 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       'সব কাজ করে দেব, কিছু লিখতে হবে না। প্রথমে আপনার নাম বলুন।';
 
   static const voiceFixMessage =
-      'এই ফোন আপনার বাংলা কথা বুঝতে পারছে না। নিচের "সেটিং খুলুন" বোতাম চাপুন, '
-      'তারপর ভয়েস ইনপুটে "Google" বেছে নিন। অথবা নিচে লিখে উত্তর দিন।';
+      'এই ফোন এখনো আপনার বাংলা কথা বোঝে না। নিচের "সেটিং খুলুন" বোতাম চাপুন, '
+      'তারপর তালিকা থেকে "বাংলা" ডাউনলোড করুন। অথবা নিচে লিখে উত্তর দিন।';
 
   Future<void> start() async {
     // An account is nice to have (cloud backup), never a blocker: the
