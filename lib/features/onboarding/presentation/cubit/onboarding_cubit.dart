@@ -99,13 +99,15 @@ class OnboardingCubit extends Cubit<OnboardingState> {
   int _turn = 0;
   int _silences = 0;
 
+  /// The fix message is spoken once, not after every failed question.
+  bool _toldFix = false;
+
   static const welcome =
       'আসসালামু আলাইকুম! কৃষিসাথীতে আপনাকে স্বাগতম। আমি আপনার সাথে কথা বলে '
       'সব কাজ করে দেব, কিছু লিখতে হবে না। প্রথমে আপনার নাম বলুন।';
 
   static const voiceFixMessage =
-      'এই ফোন এখনো আপনার বাংলা কথা বোঝে না। নিচের "সেটিং খুলুন" বোতাম চাপুন, '
-      'তারপর তালিকা থেকে "বাংলা" ডাউনলোড করুন। অথবা নিচে লিখে উত্তর দিন।';
+      'এই ফোনে এখন বাংলা কথা বোঝা যাচ্ছে না। নিচে লিখে বা বোতাম চেপে উত্তর দিন।';
 
   Future<void> start() async {
     // An account is nice to have (cloud backup), never a blocker: the
@@ -140,6 +142,17 @@ class OnboardingCubit extends Cubit<OnboardingState> {
     );
     await _output.speak(hint == null ? prompt : '$hint $prompt');
     if (isClosed || turn != _turn) return;
+    // This phone can't recognise Bangla: don't keep the farmer waiting on
+    // the mic each question - typing and the buttons are ready.
+    if (state.voiceProblem) {
+      emit(
+        state.copyWith(
+          mic: SetupMic.idle,
+          hint: 'নিচে লিখে বা বেছে নিয়ে উত্তর দিন।',
+        ),
+      );
+      return;
+    }
     await _listen(turn);
   }
 
@@ -171,7 +184,10 @@ class OnboardingCubit extends Cubit<OnboardingState> {
             hint: 'মাইক চেপে আবার বলুন, অথবা নিচে লিখুন।',
           ),
         );
-        if (problem) await _output.speak(voiceFixMessage);
+        if (problem && !_toldFix) {
+          _toldFix = true;
+          await _output.speak(voiceFixMessage);
+        }
       case HeardFailure.network:
         emit(
           state.copyWith(

@@ -1,3 +1,4 @@
+import 'package:plant_health/services/district_coordinates.dart';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -15,6 +16,7 @@ class WeatherInfo {
     required this.windSpeed,
     required this.weatherCode,
     required this.time,
+    this.place = 'ঢাকা',
   });
 
   final double temperature;
@@ -28,18 +30,22 @@ class WeatherInfo {
   final double windSpeed;
   final int weatherCode;
   final String time;
+
+  /// District the forecast is for (Bangla name).
+  final String place;
 }
 
 class WeatherService {
   const WeatherService();
 
-  // Dhaka coordinates
-  static const double _latitude = 23.8103;
-  static const double _longitude = 90.4125;
-
-  Future<WeatherInfo> fetchCurrentWeather() async {
+  /// Weather for the farmer's district; Dhaka when the district is unknown.
+  Future<WeatherInfo> fetchCurrentWeather({String? district}) async {
+    final place = districtCoordinates.containsKey(district)
+        ? district!
+        : 'ঢাকা';
+    final (latitude, longitude) = districtCoordinates[place]!;
     final uri = Uri.parse(
-      'https://api.open-meteo.com/v1/forecast?latitude=$_latitude&longitude=$_longitude&timezone=auto&forecast_days=1&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,uv_index_max',
+      'https://api.open-meteo.com/v1/forecast?latitude=$latitude&longitude=$longitude&timezone=auto&forecast_days=1&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,uv_index_max',
     );
 
     final response = await http.get(uri);
@@ -82,6 +88,7 @@ class WeatherService {
       windSpeed: (current['wind_speed_10m'] as num?)?.toDouble() ?? 0,
       weatherCode: (current['weather_code'] as num?)?.toInt() ?? -1,
       time: (current['time'] as String?) ?? '',
+      place: place,
     );
   }
 

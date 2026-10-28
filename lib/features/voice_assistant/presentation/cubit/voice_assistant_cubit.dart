@@ -93,8 +93,10 @@ class VoiceAssistantCubit extends Cubit<VoiceAssistantState> {
   static const _nothingHeardMessage =
       'কোনো কথা শোনা যায়নি। মাইক চেপে আবার বলুন।';
   static const voiceFixMessage =
-      'এই ফোন এখনো বাংলা কথা বোঝে না। "সেটিং খুলুন" চেপে তালিকা থেকে '
-      '"বাংলা" ডাউনলোড করুন, তারপর আবার মাইক চাপুন। অথবা নিচে লিখে প্রশ্ন করুন।';
+      'এই ফোনে এখন বাংলা কথা বোঝা যাচ্ছে না। নিচের বোতাম চেপে বা লিখে প্রশ্ন করুন।';
+
+  /// The fix message is spoken once per session, not on every failure.
+  bool _toldFix = false;
 
   /// [quiet] is for listening the assistant started on its own (after a
   /// greeting or an answer): if the farmer says nothing it just goes idle,
@@ -148,7 +150,10 @@ class VoiceAssistantCubit extends Cubit<VoiceAssistantState> {
           voiceProblem: true,
         ),
       );
-      _output.speak(voiceFixMessage);
+      if (!_toldFix) {
+        _toldFix = true;
+        _output.speak(voiceFixMessage);
+      }
     } else if (quiet) {
       emit(state.copyWith(status: VoiceStatus.idle));
     } else {
@@ -163,7 +168,9 @@ class VoiceAssistantCubit extends Cubit<VoiceAssistantState> {
     final generation = ++_generation;
     await _input.stop();
     emit(state.copyWith(reply: greeting));
-    if (await _speak(greeting, generation)) {
+    // Once the phone is known not to understand Bangla, don't keep opening
+    // the mic on its own - the farmer uses the buttons and text instead.
+    if (await _speak(greeting, generation) && !state.voiceProblem) {
       await startListening(quiet: true);
     }
   }
@@ -206,7 +213,7 @@ class VoiceAssistantCubit extends Cubit<VoiceAssistantState> {
     if (action != null) _actions.add(action);
     final finished = await _speak(answer.text, generation);
     // After opening a screen the next step is a tap/photo, not speech.
-    if (finished && fromVoice && action == null) {
+    if (finished && fromVoice && action == null && !state.voiceProblem) {
       await startListening(quiet: true);
     }
   }
@@ -232,6 +239,16 @@ class VoiceAssistantCubit extends Cubit<VoiceAssistantState> {
     final answer = state.reply;
     if (answer == null || state.status == VoiceStatus.processing) return;
     await _speak(answer, ++_generation);
+  }
+
+  /// Ends the conversation when the farmer leaves the home tab: mic off,
+  /// voice quiet, so it doesn't keep listening on a screen that can't
+  /// answer or talk over that screen's guide.
+  Future<void> hush() async {
+    _generation++;
+    await _input.stop();
+    await _output.stop();
+    if (!isClosed) emit(state.copyWith(status: VoiceStatus.idle));
   }
 
   Future<void> stopSpeaking() async {

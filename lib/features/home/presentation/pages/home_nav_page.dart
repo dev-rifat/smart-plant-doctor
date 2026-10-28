@@ -37,7 +37,7 @@ class _HomeNavPageState extends State<HomeNavPage> {
   late final VoiceAssistantCubit _voice = VoiceAssistantCubit(
     getIt<VoiceInputService>(),
     getIt<VoiceOutputService>(),
-    LocalCommandResponder(const WeatherService()),
+    LocalCommandResponder(const WeatherService(), district: _farmerDistrict),
   );
   late final StreamSubscription<VoiceAction> _voiceActions = _voice.actions
       .listen(_openForVoice);
@@ -74,6 +74,14 @@ class _HomeNavPageState extends State<HomeNavPage> {
     GuideScreen.products,
     GuideScreen.profile,
   ];
+
+  static Future<String?> _farmerDistrict() async {
+    try {
+      return (await getIt<FarmerProfileRepository>().load())?.district;
+    } catch (_) {
+      return null; // weather falls back to Dhaka
+    }
+  }
 
   void _openForVoice(VoiceAction action) {
     _controller.jumpToTab(switch (action) {
@@ -176,7 +184,10 @@ class _HomeNavPageState extends State<HomeNavPage> {
     return PersistentTabView(
       context,
       controller: _controller,
-      onItemSelected: (i) => getIt<VoiceGuide>().announce(_tabGuides[i]),
+      onItemSelected: (i) async {
+        if (i != 0) await _voice.hush();
+        await getIt<VoiceGuide>().announce(_tabGuides[i]);
+      },
       screens: _buildScreens(),
       items: _navBarsItems(context),
       navBarHeight: 68,
@@ -210,12 +221,21 @@ class _HomeOverviewTabState extends State<_HomeOverviewTab> {
   @override
   void initState() {
     super.initState();
-    _weatherFuture = _weatherService.fetchCurrentWeather();
+    _weatherFuture = _loadWeather();
+  }
+
+  /// Weather for the farmer's own district (from the voice setup).
+  Future<WeatherInfo> _loadWeather() async {
+    String? district;
+    try {
+      district = (await getIt<FarmerProfileRepository>().load())?.district;
+    } catch (_) {}
+    return _weatherService.fetchCurrentWeather(district: district);
   }
 
   void _refreshWeather() {
     setState(() {
-      _weatherFuture = _weatherService.fetchCurrentWeather();
+      _weatherFuture = _loadWeather();
     });
   }
 
@@ -311,7 +331,10 @@ class _WeatherUpdateCard extends StatelessWidget {
                 const Icon(Icons.cloud_off_rounded, color: Color(0xFF2E7D32)),
                 const SizedBox(width: 10),
                 const Expanded(child: Text('আবহাওয়ার আপডেট পাওয়া যায়নি')),
-                TextButton(onPressed: onRefresh, child: const Text('Retry')),
+                TextButton(
+                  onPressed: onRefresh,
+                  child: const Text('আবার চেষ্টা'),
+                ),
               ],
             );
           }
@@ -334,14 +357,14 @@ class _WeatherUpdateCard extends StatelessWidget {
                   const Icon(Icons.cloud_rounded, color: Color(0xFF2E7D32)),
                   const SizedBox(width: 8),
                   Text(
-                    'আজকের আবহাওয়া (ঢাকা)',
+                    'আজকের আবহাওয়া (${data.place})',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   const Spacer(),
                   IconButton(
-                    tooltip: 'Refresh weather',
+                    tooltip: 'আবহাওয়া আবার আনুন',
                     onPressed: onRefresh,
                     icon: const Icon(Icons.refresh_rounded),
                   ),

@@ -84,12 +84,13 @@ class _OnboardingView extends StatelessWidget {
                     ],
                   ),
                 ),
+                const SizedBox(height: 24),
+                _Fallback(state: state),
+                // Below the answer box, so the box never moves when it shows.
                 if (state.voiceProblem) ...[
                   const SizedBox(height: 16),
                   const _VoiceFixCard(),
                 ],
-                const SizedBox(height: 24),
-                _Fallback(state: state),
                 const SizedBox(height: 32),
                 TextButton(
                   onPressed: () =>
@@ -223,38 +224,34 @@ class _VoiceFixCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: const Color(0xFFFFF3E0),
-      elevation: 0,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'এই ফোন এখনো বাংলা কথা বোঝে না। "সেটিং খুলুন" চেপে তালিকা থেকে "বাংলা" ডাউনলোড করুন, তারপর ফিরে এসে মাইক চাপুন।',
-              style: TextStyle(fontSize: 17),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 8, 6, 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF3E0),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.mic_off_rounded, color: Color(0xFF8A5300)),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Text(
+              'এই ফোনে বাংলা কথা বোঝা যাচ্ছে না। লিখে বা বেছে নিয়ে উত্তর দিন।',
+              style: TextStyle(fontSize: 15, color: Color(0xFF5D3A00)),
             ),
-            const SizedBox(height: 12),
-            FilledButton.icon(
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(56),
-              ),
-              onPressed: () async {
-                final opened = await PhoneSettings.openVoiceInput();
-                if (!opened && context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('সেটিং খোলা যায়নি। নিচে লিখে উত্তর দিন।'),
-                    ),
-                  );
-                }
-              },
-              icon: const Icon(Icons.settings_voice_rounded),
-              label: const Text('সেটিং খুলুন', style: TextStyle(fontSize: 18)),
-            ),
-          ],
-        ),
+          ),
+          TextButton(
+            onPressed: () async {
+              final opened = await PhoneSettings.openVoiceInput();
+              if (!opened && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('সেটিং খোলা যায়নি।')),
+                );
+              }
+            },
+            child: const Text('ঠিক করুন', style: TextStyle(fontSize: 15)),
+          ),
+        ],
       ),
     );
   }
@@ -284,6 +281,30 @@ class _FallbackState extends State<_Fallback> {
   void dispose() {
     _text.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickDistrict(
+    BuildContext context,
+    OnboardingCubit cubit,
+  ) async {
+    final districts = [...BanglaAnswers.districts]..sort();
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) => SizedBox(
+        height: MediaQuery.of(context).size.height * 0.75,
+        child: ListView.separated(
+          itemCount: districts.length,
+          separatorBuilder: (_, _) => const Divider(height: 1),
+          itemBuilder: (context, i) => ListTile(
+            title: Text(districts[i], style: const TextStyle(fontSize: 20)),
+            onTap: () => Navigator.pop(context, districts[i]),
+          ),
+        ),
+      ),
+    );
+    if (picked != null) await cubit.answer(picked);
   }
 
   @override
@@ -335,7 +356,7 @@ class _FallbackState extends State<_Fallback> {
           ],
         );
       case SetupStep.name || SetupStep.district:
-        return TextField(
+        final field = TextField(
           controller: _text,
           style: const TextStyle(fontSize: 19),
           textInputAction: TextInputAction.done,
@@ -349,6 +370,26 @@ class _FallbackState extends State<_Fallback> {
               onPressed: () => cubit.answer(_text.text),
             ),
           ),
+        );
+        if (s.step == SetupStep.name) return field;
+        // Typing a district is hard for many farmers: offer the list.
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            FilledButton.tonalIcon(
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(56),
+              ),
+              onPressed: () => _pickDistrict(context, cubit),
+              icon: const Icon(Icons.list_alt_rounded),
+              label: const Text(
+                'তালিকা থেকে জেলা বেছে নিন',
+                style: TextStyle(fontSize: 18),
+              ),
+            ),
+            const SizedBox(height: 12),
+            field,
+          ],
         );
       case SetupStep.failed:
         return FilledButton.icon(

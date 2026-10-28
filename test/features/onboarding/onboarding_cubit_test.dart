@@ -189,4 +189,28 @@ void main() {
     expect(cubit.state.step, SetupStep.done);
     expect(profiles.saved?.name, 'করিম');
   });
+
+  test(
+    'voice broken: fix said once, later questions wait for typing',
+    () async {
+      final ears = _ScriptedEars(const [
+        Heard.failed(HeardFailure.notUnderstood),
+      ])..broken = true;
+      final mouth = _Mouth();
+      final cubit = OnboardingCubit(ears, mouth, _Profiles());
+      unawaited(cubit.start());
+      await _settle();
+      expect(cubit.state.voiceProblem, isTrue);
+
+      unawaited(cubit.answer('করিম')); // typed
+      await _settle();
+      expect(cubit.state.step, SetupStep.confirmName);
+      expect(ears.listens, 1); // no new mic session
+      expect(cubit.state.mic, SetupMic.idle);
+      expect(
+        mouth.said.where((t) => t == OnboardingCubit.voiceFixMessage),
+        hasLength(1),
+      );
+    },
+  );
 }

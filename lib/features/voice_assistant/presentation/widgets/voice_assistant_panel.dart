@@ -24,13 +24,6 @@ class _VoiceAssistantPanelState extends State<VoiceAssistantPanel> {
   final _text = TextEditingController();
   final _focus = FocusNode();
 
-  /// One-tap questions, for farmers who'd rather tap than speak.
-  static const _suggestions = [
-    'আজ বৃষ্টি হবে কি?',
-    'ধানের রোগ পরীক্ষা করো',
-    'কৃষি পণ্য দেখাও',
-  ];
-
   @override
   void dispose() {
     _text.dispose();
@@ -76,8 +69,6 @@ class _VoiceAssistantPanelState extends State<VoiceAssistantPanel> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const _AssistantTitle(),
-              const SizedBox(height: 14),
               if (state.transcript.isNotEmpty) ...[
                 _Bubble(text: state.transcript, fromFarmer: true),
                 const SizedBox(height: 8),
@@ -93,7 +84,7 @@ class _VoiceAssistantPanelState extends State<VoiceAssistantPanel> {
               ),
               if (!state.canSpeak)
                 const Padding(
-                  padding: EdgeInsets.only(top: 6, left: 4),
+                  padding: EdgeInsets.only(top: 6, left: 52),
                   child: Text(
                     'এই ফোনে বাংলা কণ্ঠ নেই, তাই উত্তর শুধু লেখায় দেখানো হচ্ছে।',
                     style: TextStyle(fontSize: 14, color: Colors.black54),
@@ -104,40 +95,10 @@ class _VoiceAssistantPanelState extends State<VoiceAssistantPanel> {
                 child: _LivingMic(state: state, cubit: cubit),
               ),
               const SizedBox(height: 12),
-              _StatusLine(state: state),
-              if (state.voiceProblem) ...[
-                const SizedBox(height: 10),
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(52),
-                    backgroundColor: Colors.white,
-                  ),
-                  onPressed: PhoneSettings.openVoiceInput,
-                  icon: const Icon(Icons.settings_voice_rounded),
-                  label: const Text(
-                    'সেটিং খুলুন',
-                    style: TextStyle(fontSize: 18),
-                  ),
-                ),
-              ],
-              const SizedBox(height: 14),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                alignment: WrapAlignment.center,
-                children: [
-                  for (final q in _suggestions)
-                    ActionChip(
-                      avatar: const Icon(Icons.touch_app_rounded, size: 18),
-                      label: Text(q, style: const TextStyle(fontSize: 15)),
-                      backgroundColor: Colors.white,
-                      side: BorderSide(
-                        color: AppColors.primary.withValues(alpha: 0.3),
-                      ),
-                      onPressed: busy ? null : () => cubit.submit(q),
-                    ),
-                ],
-              ),
+              if (state.voiceProblem && state.status != VoiceStatus.listening)
+                const _NoBanglaNote()
+              else
+                _StatusLine(state: state),
               const SizedBox(height: 14),
               TextField(
                 controller: _text,
@@ -173,37 +134,6 @@ class _VoiceAssistantPanelState extends State<VoiceAssistantPanel> {
           ),
         );
       },
-    );
-  }
-}
-
-class _AssistantTitle extends StatelessWidget {
-  const _AssistantTitle();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Row(
-      children: [
-        _Avatar(),
-        SizedBox(width: 10),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'কৃষিসাথী',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primaryDark,
-              ),
-            ),
-            Text(
-              'আপনার কৃষি সহকারী',
-              style: TextStyle(fontSize: 13, color: Colors.black54),
-            ),
-          ],
-        ),
-      ],
     );
   }
 }
@@ -280,6 +210,7 @@ class _Bubble extends StatelessWidget {
           : MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
+        if (!fromFarmer) ...[const _Avatar(), const SizedBox(width: 10)],
         Flexible(child: bubble),
         if (fromFarmer) ...[
           const SizedBox(width: 10),
@@ -527,6 +458,39 @@ class _StatusLine extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Shown instead of a red error when this phone can't recognise Bangla:
+/// short and calm, because everything else still works by tap and text.
+class _NoBanglaNote extends StatelessWidget {
+  const _NoBanglaNote();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 8, 6, 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF3E0),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.mic_off_rounded, color: Color(0xFF8A5300)),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Text(
+              'এই ফোনে বাংলা কথা বোঝা যাচ্ছে না। নিচের বোতাম বা লেখা ব্যবহার করুন।',
+              style: TextStyle(fontSize: 15, color: Color(0xFF5D3A00)),
+            ),
+          ),
+          TextButton(
+            onPressed: PhoneSettings.openVoiceInput,
+            child: const Text('ঠিক করুন', style: TextStyle(fontSize: 15)),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:plant_health/core/utils/bangla_format.dart';
 import 'package:plant_health/features/voice_assistant/data/local_command_responder.dart';
 import 'package:plant_health/features/voice_assistant/domain/voice_responder.dart';
 import 'package:plant_health/services/weather_service.dart';
@@ -10,7 +11,7 @@ class _FakeWeather extends WeatherService {
   final bool fail;
 
   @override
-  Future<WeatherInfo> fetchCurrentWeather() async {
+  Future<WeatherInfo> fetchCurrentWeather({String? district}) async {
     if (fail) throw Exception('offline');
     return WeatherInfo(
       temperature: 28.4,
@@ -24,6 +25,7 @@ class _FakeWeather extends WeatherService {
       windSpeed: 8,
       weatherCode: 0,
       time: '2026-10-27T10:30',
+      place: district ?? 'ঢাকা',
     );
   }
 }
@@ -62,20 +64,30 @@ void main() {
     expect((await wet.respond('আবহাওয়া কেমন?')).text, contains('স্প্রে'));
   });
 
-  test('weather offline gives a Bangla error instead of made-up data', () async {
-    final offline = LocalCommandResponder(const _FakeWeather(fail: true));
-    expect(
-      () => offline.respond('আজ বৃষ্টি হবে কি?'),
-      throwsA(
-        isA<Exception>().having((e) => '$e', 'message', contains('ইন্টারনেট')),
-      ),
-    );
-  });
+  test(
+    'weather offline gives a Bangla error instead of made-up data',
+    () async {
+      final offline = LocalCommandResponder(const _FakeWeather(fail: true));
+      expect(
+        () => offline.respond('আজ বৃষ্টি হবে কি?'),
+        throwsA(
+          isA<Exception>().having(
+            (e) => '$e',
+            'message',
+            contains('ইন্টারনেট'),
+          ),
+        ),
+      );
+    },
+  );
 
   test('history and news say honestly they are not ready yet', () async {
     expect((await ask('আগের রিপোর্ট দেখাও')).text, contains('এখনো চালু হয়নি'));
     expect((await ask('আগের রিপোর্ট দেখাও')).action, isNull);
-    expect((await ask('কৃষি বিষয়ক খবর পড়ে শোনাও')).text, contains('এখনো তৈরি হয়নি'));
+    expect(
+      (await ask('কৃষি বিষয়ক খবর পড়ে শোনাও')).text,
+      contains('এখনো তৈরি হয়নি'),
+    );
   });
 
   test('farming advice is not invented, points to the officer', () async {
@@ -91,6 +103,26 @@ void main() {
   });
 
   test('greeting', () async {
-    expect((await ask('আসসালামু আলাইকুম')).text, LocalCommandResponder.greeting);
+    expect(
+      (await ask('আসসালামু আলাইকুম')).text,
+      LocalCommandResponder.greeting,
+    );
+  });
+
+  test('weather is for the farmer\'s district', () async {
+    final local = LocalCommandResponder(
+      const _FakeWeather(),
+      district: () async => 'গাজীপুর',
+    );
+    expect(
+      (await local.respond('আজ বৃষ্টি হবে কি?')).text,
+      startsWith('গাজীপুরের আবহাওয়া'),
+    );
+  });
+
+  test('place names take the right possessive', () {
+    expect(BanglaFormat.possessive('ঢাকা'), 'ঢাকার');
+    expect(BanglaFormat.possessive('গাজীপুর'), 'গাজীপুরের');
+    expect(BanglaFormat.possessive('নওগাঁ'), 'নওগাঁর');
   });
 }

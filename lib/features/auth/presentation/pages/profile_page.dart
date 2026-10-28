@@ -66,7 +66,7 @@ class _ProfilePageState extends State<ProfilePage> {
         }
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text('প্রোফাইল')),
+        appBar: AppBar(title: const Text('আমার তথ্য')),
         body: Container(
           width: double.infinity,
           decoration: const BoxDecoration(
@@ -124,7 +124,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               const SizedBox(height: 18),
                               _ProfileInfoTile(
                                 icon: Icons.person_outline_rounded,
-                                title: 'ইউজার নাম',
+                                title: 'নাম',
                                 value: displayName,
                               ),
                               if (farmer != null) ...[
@@ -149,32 +149,6 @@ class _ProfilePageState extends State<ProfilePage> {
                                   value: phoneNumber,
                                 ),
                               ],
-                              const SizedBox(height: 10),
-                              const _ProfileInfoTile(
-                                icon: Icons.language_rounded,
-                                title: 'লোকালাইজেশন',
-                                value: 'বাংলা (ডিফল্ট)',
-                              ),
-                              const SizedBox(height: 10),
-                              FutureBuilder<PackageInfo>(
-                                future: _packageInfoFuture,
-                                builder: (context, snapshot) {
-                                  final versionText = snapshot.hasData
-                                      ? '${snapshot.data!.version}+${snapshot.data!.buildNumber}'
-                                      : 'v.1.2.0';
-                                  return _ProfileInfoTile(
-                                    icon: Icons.verified_outlined,
-                                    title: 'অ্যাপ ভার্সন',
-                                    value: versionText,
-                                  );
-                                },
-                              ),
-                              const SizedBox(height: 14),
-                              const _ProfileInfoTile(
-                                icon: Icons.palette_outlined,
-                                title: 'থিম',
-                                value: 'লাইট',
-                              ),
                               const SizedBox(height: 18),
                               ElevatedButton.icon(
                                 onPressed: isLoading
@@ -192,7 +166,18 @@ class _ProfilePageState extends State<ProfilePage> {
                                         ),
                                       )
                                     : const Icon(Icons.logout_rounded),
-                                label: const Text('লগআউট'),
+                                label: const Text('নতুন করে শুরু করুন'),
+                              ),
+                              const SizedBox(height: 12),
+                              FutureBuilder<PackageInfo>(
+                                future: _packageInfoFuture,
+                                builder: (context, snapshot) => Text(
+                                  snapshot.hasData
+                                      ? 'কৃষিসাথী সংস্করণ ${snapshot.data!.version}'
+                                      : '',
+                                  textAlign: TextAlign.center,
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
                               ),
                             ],
                           );
@@ -218,8 +203,10 @@ class _ProfilePageState extends State<ProfilePage> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('লগআউট করুন?'),
-        content: const Text('আপনি কি সত্যিই লগআউট করতে চান?'),
+        title: const Text('নতুন করে শুরু করবেন?'),
+        content: const Text(
+          'আপনার নাম, জেলা ও ফসলের তথ্য মুছে যাবে। আবার কথা বলে বা লিখে দিতে হবে।',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
@@ -230,7 +217,10 @@ class _ProfilePageState extends State<ProfilePage> {
               Navigator.pop(dialogContext);
               context.read<AuthCubit>().logout();
             },
-            child: const Text('লগআউট', style: TextStyle(color: Colors.red)),
+            child: const Text(
+              'মুছে ফেলুন',
+              style: TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),

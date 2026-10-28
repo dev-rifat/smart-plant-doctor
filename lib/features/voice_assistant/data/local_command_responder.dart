@@ -9,9 +9,12 @@ import 'package:plant_health/services/weather_service.dart';
 /// "can't answer yet" plus a pointer to the agriculture officer, never a
 /// made-up recommendation.
 class LocalCommandResponder implements VoiceResponder {
-  LocalCommandResponder(this._weather);
+  LocalCommandResponder(this._weather, {this.district});
 
   final WeatherService _weather;
+
+  /// The farmer's district, for local weather (from the voice setup).
+  final Future<String?> Function()? district;
 
   @override
   Future<VoiceReply> respond(String text) async {
@@ -63,7 +66,7 @@ class LocalCommandResponder implements VoiceResponder {
   Future<String> _weatherAnswer() async {
     final WeatherInfo w;
     try {
-      w = await _weather.fetchCurrentWeather();
+      w = await _weather.fetchCurrentWeather(district: await district?.call());
     } catch (_) {
       throw Exception(
         'আবহাওয়ার তথ্য আনা যায়নি। ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন।',
@@ -79,7 +82,7 @@ class LocalCommandResponder implements VoiceResponder {
     // Open-Meteo returns local time as "2026-10-27T10:30".
     final updated = w.time.contains('T') ? w.time.split('T').last : w.time;
 
-    return 'ঢাকার আবহাওয়া: এখন ${BanglaFormat.digits(w.temperature.round())} '
+    return '${BanglaFormat.possessive(w.place)} আবহাওয়া: এখন ${BanglaFormat.digits(w.temperature.round())} '
         'ডিগ্রি সেলসিয়াস, ${_weather.weatherLabel(w.weatherCode)}। $rain '
         '(সূত্র: Open-Meteo, আপডেট ${BanglaFormat.digits(updated)})';
   }

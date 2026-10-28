@@ -34,4 +34,11 @@ abstract final class BanglaFormat {
     }
     return '${amount < 0 ? '-' : ''}৳${digits(grouped)}';
   }
+
+  /// Possessive of a place name: "ঢাকা" → "ঢাকার", "গাজীপুর" → "গাজীপুরের".
+  static String possessive(String name) {
+    const vowelEndings = 'ািীুূেৈোৌঁ';
+    if (name.isEmpty) return name;
+    return vowelEndings.contains(name[name.length - 1]) ? '$nameর' : '$nameের';
+  }
 }

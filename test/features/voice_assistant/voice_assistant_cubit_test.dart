@@ -150,16 +150,23 @@ void main() {
     expect(cubit.state.status, VoiceStatus.idle);
   });
 
-  test('mic unavailable shows a Bangla error and keeps typing possible', () async {
-    cubit = VoiceAssistantCubit(_FakeInput(available: false), output, responder);
-    await cubit.startListening();
-    expect(cubit.state.status, VoiceStatus.error);
-    expect(cubit.state.errorMessage, contains('মাইক্রোফোন'));
+  test(
+    'mic unavailable shows a Bangla error and keeps typing possible',
+    () async {
+      cubit = VoiceAssistantCubit(
+        _FakeInput(available: false),
+        output,
+        responder,
+      );
+      await cubit.startListening();
+      expect(cubit.state.status, VoiceStatus.error);
+      expect(cubit.state.errorMessage, contains('মাইক্রোফোন'));
 
-    unawaited(cubit.submit('আজ বৃষ্টি হবে কি?'));
-    await _settle();
-    expect(responder.asked, ['আজ বৃষ্টি হবে কি?']);
-  });
+      unawaited(cubit.submit('আজ বৃষ্টি হবে কি?'));
+      await _settle();
+      expect(responder.asked, ['আজ বৃষ্টি হবে কি?']);
+    },
+  );
 
   test('silence ends with "nothing heard", nothing is sent', () async {
     await cubit.startListening();
@@ -202,7 +209,11 @@ void main() {
   });
 
   test('no Bangla voice: answer still shown, canSpeak turns false', () async {
-    cubit = VoiceAssistantCubit(input, _FakeOutput(hasBangla: false), responder);
+    cubit = VoiceAssistantCubit(
+      input,
+      _FakeOutput(hasBangla: false),
+      responder,
+    );
     await cubit.submit('প্রশ্ন');
     expect(cubit.state.status, VoiceStatus.idle);
     expect(cubit.state.reply, 'উত্তর: প্রশ্ন');
@@ -253,6 +264,16 @@ void main() {
     slow.complete('পুরনো উত্তর');
     await _settle();
     expect(cubit.state.reply, 'দ্বিতীয় উত্তর');
+  });
+
+  test('leaving the tab turns the mic off without an error', () async {
+    await cubit.startListening();
+    await cubit.hush();
+    input.onStopped!(); // late stop callback from the recognizer
+    expect(input.stops, greaterThan(0));
+    expect(cubit.state.status, VoiceStatus.idle);
+    expect(cubit.state.errorMessage, isNull);
+    expect(responder.asked, isEmpty);
   });
 
   test('a command emits its screen once, then speaks', () async {
