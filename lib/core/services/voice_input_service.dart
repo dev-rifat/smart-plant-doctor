@@ -48,6 +48,7 @@ class VoiceInputService {
   /// Chosen up front when the default recognizer is the offline one without
   /// Bangla, or after it keeps failing; null = not decided yet.
   bool? _dialogMode;
+  Future<Heard>? _dialog;
 
   Future<bool> _useDialog() async {
     if (!Platform.isAndroid) return false;
@@ -64,21 +65,65 @@ class VoiceInputService {
     VoidCallback onStopped,
   ) async {
     _lastErrorCode = null;
-    final String? text;
+    // One request at a time: a second one while listening (e.g. a screen
+    // asking as it opens) shares the same answer instead of failing "busy".
+    final Heard heard;
     try {
-      text = await GoogleVoiceDialog.recognize();
+      heard = await (_dialog ??= _listenGoogle().whenComplete(
+        () => _dialog = null,
+      ));
     } on PlatformException catch (e) {
-      debugPrint('🎙️ Google speech dialog unavailable: ${e.code}');
+      debugPrint('🎙️ Google speech unavailable: ${e.code}');
       _dialogMode = false; // back to the plugin next time
       return false;
     }
-    if (text != null && text.trim().isNotEmpty) {
-      onText(text.trim(), true);
+    final text = heard.text;
+    debugPrint('🎙️ Google heard: "${text ?? ''}" ${heard.failure ?? ''}');
+    if (text != null) {
+      onText(text, true);
     } else {
-      _lastErrorCode = 'error_speech_timeout'; // nothing heard / closed
+      _lastErrorCode = switch (heard.failure) {
+        HeardFailure.notUnderstood => 'error_no_match',
+        HeardFailure.network => 'error_network',
+        HeardFailure.unavailable => 'error_permission',
+        _ => 'error_speech_timeout',
+      };
     }
     onStopped();
-    return true;
+    return heard.failure != HeardFailure.unavailable;
+  }
+
+  /// The Google app's recognition service first (no dialog, online Bangla);
+  /// Google's speech dialog if that service can't be used on this phone.
+  Future<Heard> _listenGoogle() async {
+    // The service records for this app, so it needs our mic permission;
+    // the plugin's initialise asks for it.
+    if (!await initialize()) {
+      return const Heard.failed(HeardFailure.unavailable);
+    }
+    try {
+      final (text, error) = await GoogleVoiceDialog.listenGoogleService();
+      if (text != null && text.trim().isNotEmpty)
+        return Heard.text(text.trim());
+      switch (error) {
+        case 7: // ERROR_NO_MATCH
+          return const Heard.failed(HeardFailure.notUnderstood);
+        case 1 || 2 || 4: // network errors
+          return const Heard.failed(HeardFailure.network);
+        case 9: // ERROR_INSUFFICIENT_PERMISSIONS
+          return const Heard.failed(HeardFailure.unavailable);
+        case 5 || 8 || 10 || 11 || 12 || 13: // client/busy/not available
+          break; // fall through to the dialog
+        default: // 6 = speech timeout, null = nothing said
+          return const Heard.failed(HeardFailure.silence);
+      }
+    } on PlatformException catch (e) {
+      debugPrint('🎙️ Google recognition service unavailable: ${e.code}');
+    }
+    final text = await GoogleVoiceDialog.recognize();
+    return text != null && text.trim().isNotEmpty
+        ? Heard.text(text.trim())
+        : const Heard.failed(HeardFailure.silence);
   }
 
   /// Initialises the recognizer and asks for mic / speech permissions.

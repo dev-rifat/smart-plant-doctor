@@ -48,6 +48,9 @@
         <intent>
             <action android:name="android.speech.RecognitionService"/>
         </intent>
+        <!-- Android 11+: lets the app see the Google app, whose speech dialog
+             understands Bangla online. -->
+        <package android:name="com.google.android.googlequicksearchbox"/>
         <!-- Android 11+: lets the app open Google's speech dialog (Bangla fallback). -->
         <intent>
             <action android:name="android.speech.action.RECOGNIZE_SPEECH"/>

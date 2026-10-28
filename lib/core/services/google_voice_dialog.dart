@@ -25,6 +25,21 @@ abstract final class GoogleVoiceDialog {
     }
   }
 
+  /// Listens through the Google app's recognition service directly (no
+  /// dialog; the app's own mic animation shows it is listening). Returns
+  /// the text, or null with the Android SpeechRecognizer error code
+  /// (6 = no speech, 7 = no match, 9 = no mic permission, 5/11 = service
+  /// not usable). Throws [PlatformException] if it can't be started.
+  static Future<(String?, int?)> listenGoogleService({
+    String language = 'bn-BD',
+  }) async {
+    final reply = await _channel.invokeMapMethod<String, Object?>(
+      'listenGoogleService',
+      {'language': language},
+    );
+    return (reply?['text'] as String?, reply?['error'] as int?);
+  }
+
   /// Opens the dialog and returns what was said, or null when nothing was
   /// heard or the farmer closed it. Throws [PlatformException] when the
   /// phone has no such dialog.
