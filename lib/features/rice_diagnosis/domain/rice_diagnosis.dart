@@ -22,8 +22,9 @@ class RiceDiagnosis {
   /// All classes, highest probability first.
   final List<ClassScore> scores;
 
-  /// Below this the model is not trusted. With the all-views-agree rule,
-  /// answers at 0.85 were 94.9% correct on the validation set.
+  /// Below this the model is not trusted. Set to 0.95 from the model
+  /// metadata: at 0.85 confident answers were 95% correct on validation but
+  /// only 80% on photos from another source; at 0.95 they were 94%.
   final double threshold;
 
   final Set<PhotoIssue> photoIssues;

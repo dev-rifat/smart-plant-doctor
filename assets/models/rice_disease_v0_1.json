@@ -19,7 +19,7 @@
   },
   "output": "calibrated probabilities, softmax(logits / temperature), same order as labels",
   "temperature": 1.35,
-  "uncertain_threshold": 0.85,
+  "uncertain_threshold": 0.95,
   "validation": {
     "accuracy": 0.7431,
     "macro_f1": 0.7102,
@@ -53,8 +53,17 @@
     "views": 5,
     "crop_fraction": 0.8,
     "max_aspect": 1.3333,
-    "threshold": 0.85,
+    "threshold": 0.95,
     "requires_all_views_agree": true,
-    "reason": "a 16:9 internet blast photo stretched to a square was predicted Sheath blight 0.97; views disagreed"
+    "reason": "a 16:9 internet blast photo stretched to a square was predicted Sheath blight 0.97; views disagreed",
+    "threshold_reason": "0.85 was >=95% correct on validation but only 80.5% on photos from an unseen source (Dhan-Shomadhan, 883 photos); at 0.95 confident answers were 93.9% correct there, answering 11%. That set has now informed this choice, so it is no longer a clean test - next check must be real farmer photos."
+  },
+  "unseen_source_test": {
+    "dataset": "Dhan-Shomadhan (Mendeley znsxdctwtt v1)",
+    "images": 883,
+    "single_view_accuracy": 0.426,
+    "answered_at_0.95": 0.111,
+    "correct_when_answered_at_0.95": 0.939,
+    "note": "v0.2 (more web data) was worse here: 23.6% - learned white background as a disease cue; not shipped"
   }
 }
