@@ -148,7 +148,10 @@ void main() {
       final d = diagnosis({'Blast': 0.6, 'Brown spot': 0.3});
       expect(d.isConfident, isFalse);
       expect(DiagnosisWording.headline(d, advice), 'নিশ্চিত হতে পারছি না');
-      expect(DiagnosisWording.speech(d, advice), isNot(contains('ব্লাস্ট')));
+      // The two closest matches are offered to check, clearly as "maybe".
+      final speech = DiagnosisWording.speech(d, advice);
+      expect(speech, startsWith('নিশ্চিত হতে পারছি না'));
+      expect(speech, contains('ব্লাস্ট রোগ অথবা বাদামি দাগ রোগ-এর মতো'));
     });
 
     test('a bad photo is uncertain even with a high score', () {
@@ -220,7 +223,13 @@ void main() {
       expect(find.text('নিশ্চিত হতে পারছি না'), findsOneWidget);
       expect(find.text('কীভাবে যাচাই করবেন'), findsNothing);
       expect(find.textContaining('দিনের আলোয়'), findsOneWidget);
-      expect(find.text('সম্ভাব্য কারণ (নিশ্চিত নয়)'), findsOneWidget);
+      // Two candidates, each with how to recognise it, no percentages.
+      expect(find.text('হতে পারে: ব্লাস্ট রোগ?'), findsOneWidget);
+      expect(
+        find.text('হতে পারে: পাতার কালো দাগ (লিফ স্মাট)?'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('%'), findsNothing);
     });
   });
 }

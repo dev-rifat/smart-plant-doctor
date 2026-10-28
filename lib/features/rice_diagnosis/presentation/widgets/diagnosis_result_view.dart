@@ -68,15 +68,15 @@ class DiagnosisResultView extends StatelessWidget {
               'পাতায় দাগ বা হলুদ ভাব থাকলে কৃষি কর্মকর্তাকে দেখান।',
             ],
           ),
+          // A usable photo: name the two closest matches with how to tell
+          // them apart, so the farmer can check the leaf. No percentages -
+          // they would look more precise than the model is here.
           if (d.photoIssues.isEmpty)
-            _Section(
-              title: 'সম্ভাব্য কারণ (নিশ্চিত নয়)',
-              lines: [
-                for (final s in d.scores.take(2))
-                  '${advice.forLabel(s.label).nameBn} '
-                      '(${DiagnosisWording.percent(s.probability)})',
-              ],
-            ),
+            for (final s in DiagnosisWording.candidates(d))
+              _Section(
+                title: 'হতে পারে: ${advice.forLabel(s.label).nameBn}?',
+                lines: advice.forLabel(s.label).check,
+              ),
         ],
         _Section(title: 'ওষুধ', lines: [advice.noChemicalAdvice]),
         const SizedBox(height: 4),

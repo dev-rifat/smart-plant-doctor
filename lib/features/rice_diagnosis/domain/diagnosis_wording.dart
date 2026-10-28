@@ -39,10 +39,23 @@ abstract final class DiagnosisWording {
     return 'সম্ভাব্য রোগ: ${advice.forLabel(d.top.label).nameBn}';
   }
 
+  /// The two closest matches when the model is unsure. On photos it was
+  /// unsure about, the right answer was among these two 89% of the time on
+  /// familiar photos and 60% on photos from another source - so they are
+  /// offered to check against the leaf, never as the answer.
+  static List<ClassScore> candidates(RiceDiagnosis d) =>
+      d.scores.take(2).toList();
+
   /// What is read aloud: short, the essentials only; details stay on screen.
   static String speech(RiceDiagnosis d, RiceAdvice advice) {
     if (!d.isConfident) {
-      return 'নিশ্চিত হতে পারছি না। ${uncertainReason(d)} $retakeTip '
+      final names = candidates(
+        d,
+      ).map((s) => advice.forLabel(s.label).nameBn).join(' অথবা ');
+      final maybe = d.photoIssues.isEmpty
+          ? 'ছবিটি $names-এর মতো লাগছে। নিচের লক্ষণ মিলিয়ে দেখুন। '
+          : '';
+      return 'নিশ্চিত হতে পারছি না। ${uncertainReason(d)} $maybe$retakeTip '
           'সমস্যা থাকলে কৃষি কর্মকর্তাকে দেখান।';
     }
     final a = advice.forLabel(d.top.label);
