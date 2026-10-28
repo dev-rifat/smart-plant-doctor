@@ -2,9 +2,8 @@
 
 ## ডেমোর আগের দিন (ফোন প্রস্তুত)
 
-1. **অ্যাপ install:** `demo/KrishiSathi-arm64.apk` ফোনে কপি করে খুলুন → Install।
-   পুরনো ফোন হলে (Android 32-bit): `demo/KrishiSathi-armv7-old-phones.apk`।
-   USB লাগানো থাকলে: `adb install -r demo/KrishiSathi-arm64.apk`
+1. **অ্যাপ install:** `demo/KrishiSathi-universal.apk` যেকোনো Android ফোনে (৩২/৬৪-bit, Android 7+) চলে — ফোনে কপি করে খুলুন → Install।
+   USB লাগানো থাকলে: `adb install -r demo/KrishiSathi-universal.apk`
 2. **বাংলা কথা বোঝা:** ফোনে বাংলা speech recognition না থাকলে (যেমন Redmi Note 12-এ) অ্যাপ নিজেই হলুদ নোটে জানায় — তখন লিখে, বোতাম চেপে ও জেলার তালিকা থেকে বেছে ডেমো দিন। অন্য Android ফোনে (Pixel/Samsung) সাধারণত কথা বোঝে — আগে পরীক্ষা করে নিন।
 3. **বাংলা কণ্ঠ:** Settings → Text-to-speech → Google → Install voice data → **বাংলা (বাংলাদেশ)** ডাউনলোড।
 4. **ডেমো ছবি গ্যালারিতে:** `demo/photos/` ফোল্ডারের ১০টি ছবি ফোনে কপি করুন।
