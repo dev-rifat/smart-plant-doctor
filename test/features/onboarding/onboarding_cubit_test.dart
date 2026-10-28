@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:plant_health/core/services/voice_input_service.dart';
 import 'package:plant_health/core/services/voice_output_service.dart';
+import 'package:plant_health/features/face_login/data/face_embedder.dart';
 import 'package:plant_health/features/onboarding/data/farmer_profile_repository.dart';
 import 'package:plant_health/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 
@@ -63,6 +64,22 @@ class _Profiles extends Fake implements FarmerProfileRepository {
   Future<void> save(FarmerProfile p) async => saved = p;
 }
 
+/// Returns the next scripted scan for each photo.
+class _Faces implements FaceEmbedder {
+  _Faces([List<FaceScan>? scans])
+    : _scans = Queue.of(
+        scans ??
+            const [
+              FaceScan.face([1, 0]),
+            ],
+      );
+
+  final Queue<FaceScan> _scans;
+
+  @override
+  Future<FaceScan> scan(String photoPath) async => _scans.removeFirst();
+}
+
 Future<void> _settle() async {
   for (var i = 0; i < 20; i++) {
     await Future<void>.delayed(Duration.zero);
@@ -79,15 +96,23 @@ void main() {
         Heard.text('হ্যাঁ'),
         Heard.text('আমি রংপুর থাকি'),
         Heard.text('ধান'),
+        Heard.text('শূন্য এক সাত এক দুই তিন চার পাঁচ ছয় সাত আট'),
+        Heard.text('হ্যাঁ'),
       ]),
       mouth,
       profiles,
+      _Faces(),
     );
 
     unawaited(cubit.start()); // keeps listening for the next answer
     await _settle();
+    expect(cubit.state.step, SetupStep.face);
+    expect(cubit.state.cameraRequest, 1); // camera opens by itself
+    await cubit.faceTaken('photo.jpg');
 
     expect(cubit.state.step, SetupStep.done);
+    expect(profiles.saved?.phone, '01712345678');
+    expect(profiles.saved?.face, [1, 0]);
     expect(profiles.saved?.name, 'করিম');
     expect(profiles.saved?.district, 'রংপুর');
     expect(profiles.saved?.primaryCrop, 'ধান');
@@ -105,6 +130,7 @@ void main() {
       ]),
       _Mouth(),
       _Profiles(),
+      _Faces(),
     );
     unawaited(cubit.start()); // keeps listening for the next answer
     await _settle();
@@ -118,7 +144,7 @@ void main() {
       Heard.failed(HeardFailure.silence),
     ]);
     final mouth = _Mouth();
-    final cubit = OnboardingCubit(ears, mouth, _Profiles());
+    final cubit = OnboardingCubit(ears, mouth, _Profiles(), _Faces());
 
     unawaited(cubit.start()); // keeps listening for the next answer
     await _settle();
@@ -133,7 +159,7 @@ void main() {
     final ears = _ScriptedEars(const [Heard.failed(HeardFailure.notUnderstood)])
       ..broken = true;
     final mouth = _Mouth();
-    final cubit = OnboardingCubit(ears, mouth, _Profiles());
+    final cubit = OnboardingCubit(ears, mouth, _Profiles(), _Faces());
 
     unawaited(cubit.start()); // keeps listening for the next answer
     await _settle();
@@ -144,14 +170,29 @@ void main() {
 
   test('typed answers work without any voice', () async {
     final profiles = _Profiles();
-    final cubit = OnboardingCubit(_ScriptedEars(const []), _Mouth(), profiles);
+    final cubit = OnboardingCubit(
+      _ScriptedEars(const []),
+      _Mouth(),
+      profiles,
+      _Faces(),
+    );
     unawaited(cubit.start()); // keeps listening for the next answer
     await _settle();
 
-    for (final typed in ['সালমা', 'হ্যাঁ', 'বগুড়া', 'পাট']) {
+    for (final typed in [
+      'সালমা',
+      'হ্যাঁ',
+      'বগুড়া',
+      'পাট',
+      '01812345678',
+      'হ্যাঁ',
+    ]) {
       unawaited(cubit.answer(typed));
       await _settle();
     }
+    await cubit.skipFace(); // no photo: login will use the number
+    expect(profiles.saved?.phone, '01812345678');
+    expect(profiles.saved?.face, isNull);
     expect(profiles.saved?.district, 'বগুড়া');
     expect(profiles.saved?.primaryCrop, 'পাট');
   });
@@ -165,6 +206,7 @@ void main() {
       ]),
       _Mouth(),
       _Profiles(),
+      _Faces(),
     );
     unawaited(cubit.start()); // keeps listening for the next answer
     await _settle();
@@ -180,12 +222,16 @@ void main() {
         Heard.text('হ্যাঁ'),
         Heard.text('রংপুর'),
         Heard.text('ধান'),
+        Heard.text('০১৭১২৩৪৫৬৭৮'),
+        Heard.text('হ্যাঁ'),
       ]),
       _Mouth(),
       profiles,
+      _Faces(),
     );
     unawaited(cubit.start());
     await _settle();
+    await cubit.faceTaken('photo.jpg');
     expect(cubit.state.step, SetupStep.done);
     expect(profiles.saved?.name, 'করিম');
   });
@@ -197,7 +243,7 @@ void main() {
         Heard.failed(HeardFailure.notUnderstood),
       ])..broken = true;
       final mouth = _Mouth();
-      final cubit = OnboardingCubit(ears, mouth, _Profiles());
+      final cubit = OnboardingCubit(ears, mouth, _Profiles(), _Faces());
       unawaited(cubit.start());
       await _settle();
       expect(cubit.state.voiceProblem, isTrue);
@@ -213,4 +259,59 @@ void main() {
       );
     },
   );
+
+  test('face photo without a face: says why and asks again', () async {
+    final mouth = _Mouth();
+    final profiles = _Profiles();
+    final cubit = OnboardingCubit(
+      _ScriptedEars(const []),
+      mouth,
+      profiles,
+      _Faces(const [
+        FaceScan.failed(FaceProblem.noFace),
+        FaceScan.face([0, 1]),
+      ]),
+    );
+    unawaited(cubit.start());
+    await _settle();
+    for (final typed in [
+      'করিম',
+      'হ্যাঁ',
+      'রংপুর',
+      'ধান',
+      '01712345678',
+      'হ্যাঁ',
+    ]) {
+      unawaited(cubit.answer(typed));
+      await _settle();
+    }
+    await cubit.faceTaken('dark.jpg');
+    expect(cubit.state.step, SetupStep.face);
+    expect(cubit.state.cameraRequest, 2);
+    expect(mouth.said.last, startsWith('ছবিতে মুখ পাওয়া যায়নি।'));
+
+    await cubit.faceTaken('good.jpg');
+    expect(profiles.saved?.face, [0, 1]);
+  });
+
+  test('wrong phone number: asks again, then confirms', () async {
+    final cubit = OnboardingCubit(
+      _ScriptedEars(const []),
+      _Mouth(),
+      _Profiles(),
+      _Faces(),
+    );
+    unawaited(cubit.start());
+    await _settle();
+    for (final typed in ['করিম', 'হ্যাঁ', 'রংপুর', 'ধান', '১২৩']) {
+      unawaited(cubit.answer(typed));
+      await _settle();
+    }
+    expect(cubit.state.step, SetupStep.phone);
+    expect(cubit.state.hint, 'নম্বর বুঝতে পারিনি।');
+    unawaited(cubit.answer('০১৯১১২২২৩৩৩'));
+    await _settle();
+    expect(cubit.state.step, SetupStep.confirmPhone);
+    expect(cubit.state.prompt, contains('০ ১ ৯ ১ ১'));
+  });
 }

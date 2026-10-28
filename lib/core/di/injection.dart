@@ -2,6 +2,7 @@
 /// This file contains all the dependency injection configuration using GetIt
 /// Place all service registrations here
 
+import 'package:plant_health/features/face_login/data/face_embedder.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:image_picker/image_picker.dart';
@@ -97,6 +98,7 @@ void setupServiceLocator() {
 
   // Rice disease check: on-device model + fixed advice content
   getIt.registerLazySingleton<RiceClassifier>(() => TfliteRiceClassifier());
+  getIt.registerLazySingleton<FaceEmbedder>(() => MobileFaceNetEmbedder());
   getIt.registerLazySingleton<RiceAdviceRepository>(
     () => RiceAdviceRepository(),
   );

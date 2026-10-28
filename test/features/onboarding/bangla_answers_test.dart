@@ -70,4 +70,29 @@ void main() {
     test('vegetable', () => expect(BanglaAnswers.crop('বেগুন'), 'সবজি'));
     test('unknown', () => expect(BanglaAnswers.crop('মাছ'), isNull));
   });
+
+  group('phone', () {
+    for (final (said, number) in [
+      ('০১৭১২৩৪৫৬৭৮', '01712345678'),
+      ('01712-345678', '01712345678'),
+      ('+8801712345678', '01712345678'),
+      ('আমার নম্বর ০১৮১১ ২২২ ৩৩৩', '01811222333'),
+      ('শূন্য এক সাত এক দুই তিন চার পাঁচ \u099B\u09DF সাত আট', '01712345678'),
+      (
+        'শূন্য এক নয় এক দুই তিন চার পাঁচ \u099B\u09AF\u09BC সাত আট',
+        '01912345678',
+      ),
+    ]) {
+      test(said, () => expect(BanglaAnswers.phone(said), number));
+    }
+    for (final wrong in ['০১৭১২৩', '01212345678', 'রহিম', '']) {
+      test(
+        'rejects "$wrong"',
+        () => expect(BanglaAnswers.phone(wrong), isNull),
+      );
+    }
+    test('read back digit by digit', () {
+      expect(BanglaAnswers.spokenPhone('017'), '০ ১ ৭');
+    });
+  });
 }

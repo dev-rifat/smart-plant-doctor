@@ -5,11 +5,25 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:plant_health/core/services/voice_input_service.dart';
 import 'package:plant_health/core/services/voice_output_service.dart';
+import 'package:plant_health/features/face_login/data/face_embedder.dart';
+import 'package:plant_health/features/face_login/presentation/login_cubit.dart'
+    show LoginCubit;
 import 'package:plant_health/features/onboarding/data/farmer_profile_repository.dart';
 import 'package:plant_health/features/onboarding/domain/bangla_answers.dart';
 
 /// Questions of the voice setup, in order.
-enum SetupStep { name, confirmName, district, crop, saving, done, failed }
+enum SetupStep {
+  name,
+  confirmName,
+  district,
+  crop,
+  phone,
+  confirmPhone,
+  face,
+  saving,
+  done,
+  failed,
+}
 
 enum SetupMic { idle, speaking, listening }
 
@@ -23,6 +37,9 @@ class OnboardingState extends Equatable {
     this.name,
     this.district,
     this.crop,
+    this.phone,
+    this.face,
+    this.cameraRequest = 0,
     this.voiceProblem = false,
   });
 
@@ -41,6 +58,13 @@ class OnboardingState extends Equatable {
   final String? name;
   final String? district;
   final String? crop;
+  final String? phone;
+
+  /// Embedding of the signup face photo, for face login later.
+  final List<double>? face;
+
+  /// Bumped when the assistant wants the camera opened on its own.
+  final int cameraRequest;
 
   /// The phone's recognizer keeps failing on Bangla: show the settings fix.
   final bool voiceProblem;
@@ -54,6 +78,9 @@ class OnboardingState extends Equatable {
     String? name,
     String? district,
     String? crop,
+    String? phone,
+    List<double>? face,
+    int? cameraRequest,
     bool? voiceProblem,
   }) => OnboardingState(
     step: step ?? this.step,
@@ -64,6 +91,9 @@ class OnboardingState extends Equatable {
     name: name ?? this.name,
     district: district ?? this.district,
     crop: crop ?? this.crop,
+    phone: phone ?? this.phone,
+    face: face ?? this.face,
+    cameraRequest: cameraRequest ?? this.cameraRequest,
     voiceProblem: voiceProblem ?? this.voiceProblem,
   );
 
@@ -77,6 +107,9 @@ class OnboardingState extends Equatable {
     name,
     district,
     crop,
+    phone,
+    face,
+    cameraRequest,
     voiceProblem,
   ];
 }
@@ -87,12 +120,13 @@ class OnboardingState extends Equatable {
 /// Listening is bounded: one answer per question, and after two silent
 /// tries it stops and waits for a tap instead of keeping the mic open.
 class OnboardingCubit extends Cubit<OnboardingState> {
-  OnboardingCubit(this._input, this._output, this._profiles)
+  OnboardingCubit(this._input, this._output, this._profiles, this._faces)
     : super(const OnboardingState());
 
   final VoiceInputService _input;
   final VoiceOutputService _output;
   final FarmerProfileRepository _profiles;
+  final FaceEmbedder _faces;
 
   /// Bumped when the farmer types/taps, so a listen still in flight for the
   /// same question is ignored.
@@ -256,11 +290,100 @@ class OnboardingCubit extends Cubit<OnboardingState> {
           );
         }
         emit(state.copyWith(crop: crop));
-        return _save();
+        return _ask(SetupStep.phone, 'লগইনের জন্য আপনার মোবাইল নম্বর বলুন।');
 
-      case SetupStep.saving || SetupStep.done || SetupStep.failed:
+      case SetupStep.phone:
+        final phone = BanglaAnswers.phone(text);
+        if (phone == null) {
+          return _ask(
+            SetupStep.phone,
+            'এগারো সংখ্যার মোবাইল নম্বর বলুন, যেমন শূন্য এক সাত…',
+            hint: 'নম্বর বুঝতে পারিনি।',
+          );
+        }
+        emit(state.copyWith(phone: phone));
+        return _ask(
+          SetupStep.confirmPhone,
+          'আপনার নম্বর ${BanglaAnswers.spokenPhone(phone)}, ঠিক তো? '
+          'হ্যাঁ অথবা না বলুন।',
+        );
+
+      case SetupStep.confirmPhone:
+        final yes = BanglaAnswers.yesNo(text);
+        if (yes == null) {
+          return _ask(state.step, state.prompt, hint: 'হ্যাঁ অথবা না বলুন।');
+        }
+        if (!yes) {
+          return _ask(SetupStep.phone, 'ঠিক আছে, আবার নম্বরটি বলুন।');
+        }
+        return _askFace(faceIntro);
+
+      case SetupStep.face ||
+          SetupStep.saving ||
+          SetupStep.done ||
+          SetupStep.failed:
         return;
     }
+  }
+
+  static const faceIntro =
+      'শেষ ধাপ: আপনার মুখের একটি ছবি তুলব। পরে মুখ দেখিয়েই লগইন করতে '
+      'পারবেন। ফোনটি মুখের সামনে ধরুন।';
+
+  /// Speaks, then asks the page to open the camera; no listening here.
+  Future<void> _askFace(String prompt, {String? hint}) async {
+    final turn = ++_turn;
+    await _input.stop();
+    emit(
+      state.copyWith(
+        step: SetupStep.face,
+        prompt: prompt,
+        hint: hint,
+        heard: '',
+        mic: SetupMic.speaking,
+      ),
+    );
+    await _output.speak(hint == null ? prompt : '$hint $prompt');
+    if (isClosed || turn != _turn) return;
+    emit(
+      state.copyWith(
+        mic: SetupMic.idle,
+        hint: hint,
+        cameraRequest: state.cameraRequest + 1,
+      ),
+    );
+  }
+
+  /// The signup face photo was taken.
+  Future<void> faceTaken(String photoPath) async {
+    if (state.step != SetupStep.face) return;
+    _turn++;
+    await _output.stop();
+    emit(state.copyWith(mic: SetupMic.idle, prompt: 'ছবি দেখছি…'));
+    final FaceScan scan;
+    try {
+      scan = await _faces.scan(photoPath);
+    } catch (e) {
+      debugPrint('🙂 Face scan failed: $e');
+      return _askFace(_faceRetake, hint: 'ছবিটি পড়া যায়নি।');
+    }
+    if (isClosed) return;
+    final problem = scan.problem;
+    if (problem != null) {
+      return _askFace(_faceRetake, hint: LoginCubit.faceProblemText(problem));
+    }
+    emit(state.copyWith(face: scan.embedding));
+    return _save();
+  }
+
+  static const _faceRetake = 'আলোর দিকে মুখ করে, সোজা তাকিয়ে আবার ছবি তুলুন।';
+
+  /// "এখন না": sign up without a face; login then uses the phone number.
+  Future<void> skipFace() async {
+    if (state.step != SetupStep.face) return;
+    _turn++;
+    await _output.stop();
+    return _save();
   }
 
   Future<void> _save() async {
@@ -277,6 +400,8 @@ class OnboardingCubit extends Cubit<OnboardingState> {
           name: state.name!,
           district: state.district!,
           primaryCrop: state.crop!,
+          phone: state.phone,
+          face: state.face,
         ),
       );
     } catch (e) {

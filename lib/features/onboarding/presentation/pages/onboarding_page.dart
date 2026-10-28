@@ -6,9 +6,12 @@ import 'package:plant_health/core/services/phone_settings.dart';
 import 'package:plant_health/core/services/voice_input_service.dart';
 import 'package:plant_health/core/services/voice_output_service.dart';
 import 'package:plant_health/core/theme/app_colors.dart';
+import 'package:plant_health/features/face_login/data/face_embedder.dart';
+import 'package:plant_health/features/face_login/presentation/face_camera.dart';
 import 'package:plant_health/features/onboarding/data/farmer_profile_repository.dart';
 import 'package:plant_health/features/onboarding/domain/bangla_answers.dart';
 import 'package:plant_health/features/onboarding/presentation/cubit/onboarding_cubit.dart';
+import 'package:plant_health/features/onboarding/presentation/widgets/assistant_says.dart';
 
 /// First launch: the assistant talks the farmer through setup. No password,
 /// nothing to read; typing and buttons are there only as a fallback.
@@ -22,6 +25,7 @@ class OnboardingPage extends StatelessWidget {
         getIt<VoiceInputService>(),
         getIt<VoiceOutputService>(),
         getIt<FarmerProfileRepository>(),
+        getIt<FaceEmbedder>(),
       )..start(),
       child: const _OnboardingView(),
     );
@@ -33,17 +37,26 @@ class _OnboardingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<OnboardingCubit, OnboardingState>(
-      // Leave once the goodbye line has been spoken.
-      listenWhen: (a, b) =>
-          b.step == SetupStep.done &&
-          b.mic == SetupMic.idle &&
-          a.mic != SetupMic.idle,
-      listener: (context, _) => Navigator.pushNamedAndRemoveUntil(
-        context,
-        AppRouter.home,
-        (_) => false,
-      ),
+    return MultiBlocListener(
+      listeners: [
+        // Leave once the goodbye line has been spoken.
+        BlocListener<OnboardingCubit, OnboardingState>(
+          listenWhen: (a, b) =>
+              b.step == SetupStep.done &&
+              b.mic == SetupMic.idle &&
+              a.mic != SetupMic.idle,
+          listener: (context, _) => Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppRouter.home,
+            (_) => false,
+          ),
+        ),
+        // The assistant asked for the face photo: open the camera itself.
+        BlocListener<OnboardingCubit, OnboardingState>(
+          listenWhen: (a, b) => b.cameraRequest != a.cameraRequest,
+          listener: (context, _) => _takeFacePhoto(context),
+        ),
+      ],
       child: Scaffold(
         backgroundColor: const Color(0xFFF4F9F4),
         body: SafeArea(
@@ -53,9 +66,16 @@ class _OnboardingView extends StatelessWidget {
               children: [
                 _Progress(step: state.step),
                 const SizedBox(height: 24),
-                _AssistantSays(state.prompt),
+                AssistantSays(state.prompt),
                 const SizedBox(height: 28),
-                _MicIndicator(state: state),
+                if (state.step == SetupStep.face)
+                  FaceCameraButton(
+                    label: 'ছবি তুলুন',
+                    busy: state.prompt == 'ছবি দেখছি…',
+                    onPressed: () => _takeFacePhoto(context),
+                  )
+                else
+                  _MicIndicator(state: state),
                 // Fixed height, so buttons below never jump when a hint
                 // appears or disappears (a farmer's tap would miss).
                 SizedBox(
@@ -91,15 +111,6 @@ class _OnboardingView extends StatelessWidget {
                   const SizedBox(height: 16),
                   const _VoiceFixCard(),
                 ],
-                const SizedBox(height: 32),
-                TextButton(
-                  onPressed: () =>
-                      Navigator.pushReplacementNamed(context, AppRouter.login),
-                  child: const Text(
-                    'আগে অ্যাকাউন্ট খুলেছেন? পাসওয়ার্ড দিয়ে লগইন করুন',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
               ],
             ),
           ),
@@ -107,6 +118,12 @@ class _OnboardingView extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> _takeFacePhoto(BuildContext context) async {
+  final cubit = context.read<OnboardingCubit>();
+  final path = await takeFacePhoto(context);
+  if (path != null) await cubit.faceTaken(path);
 }
 
 class _Progress extends StatelessWidget {
@@ -120,22 +137,26 @@ class _Progress extends StatelessWidget {
       SetupStep.name || SetupStep.confirmName => 0,
       SetupStep.district => 1,
       SetupStep.crop => 2,
-      _ => 3,
+      SetupStep.phone || SetupStep.confirmPhone => 3,
+      SetupStep.face => 4,
+      _ => 5,
     };
-    const labels = ['নাম', 'জেলা', 'ফসল'];
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    const labels = ['নাম', 'জেলা', 'ফসল', 'মোবাইল', 'মুখ'];
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 6,
+      runSpacing: 6,
       children: [
-        for (var i = 0; i < labels.length; i++) ...[
+        for (var i = 0; i < labels.length; i++)
           Chip(
+            visualDensity: VisualDensity.compact,
             avatar: Icon(
               i < index ? Icons.check_circle_rounded : Icons.circle_outlined,
+              size: 18,
               color: i <= index ? AppColors.primary : Colors.black38,
             ),
-            label: Text(labels[i], style: const TextStyle(fontSize: 16)),
+            label: Text(labels[i], style: const TextStyle(fontSize: 15)),
           ),
-          if (i < labels.length - 1) const SizedBox(width: 8),
-        ],
       ],
     );
   }
@@ -314,7 +335,7 @@ class _FallbackState extends State<_Fallback> {
     const big = TextStyle(fontSize: 20, fontWeight: FontWeight.w600);
 
     switch (s.step) {
-      case SetupStep.confirmName:
+      case SetupStep.confirmName || SetupStep.confirmPhone:
         return Row(
           children: [
             Expanded(
@@ -391,6 +412,28 @@ class _FallbackState extends State<_Fallback> {
             field,
           ],
         );
+      case SetupStep.phone:
+        return TextField(
+          controller: _text,
+          keyboardType: TextInputType.phone,
+          style: const TextStyle(fontSize: 20, letterSpacing: 1.5),
+          onSubmitted: cubit.answer,
+          decoration: InputDecoration(
+            hintText: 'অথবা নম্বর লিখুন',
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.send_rounded),
+              onPressed: () => cubit.answer(_text.text),
+            ),
+          ),
+        );
+      case SetupStep.face:
+        return TextButton(
+          onPressed: cubit.skipFace,
+          child: const Text(
+            'এখন না, পরে (লগইন হবে মোবাইল নম্বরে)',
+            style: TextStyle(fontSize: 16),
+          ),
+        );
       case SetupStep.failed:
         return FilledButton.icon(
           style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(60)),
@@ -401,68 +444,5 @@ class _FallbackState extends State<_Fallback> {
       case SetupStep.saving || SetupStep.done:
         return const SizedBox.shrink();
     }
-  }
-}
-
-/// The assistant's question as a speech bubble from "কৃষিসাথী", so it
-/// reads like a person talking, not a form.
-class _AssistantSays extends StatelessWidget {
-  const _AssistantSays(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Container(
-          width: 52,
-          height: 52,
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: [Color(0xFF66BB6A), AppColors.primaryDark],
-            ),
-          ),
-          child: const Icon(Icons.eco_rounded, color: Colors.white, size: 30),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            child: Container(
-              key: ValueKey(text),
-              padding: const EdgeInsets.all(18),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(24),
-                  topRight: Radius.circular(24),
-                  bottomRight: Radius.circular(24),
-                  bottomLeft: Radius.circular(6),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Color(0x1A000000),
-                    blurRadius: 12,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Text(
-                text,
-                style: const TextStyle(
-                  fontSize: 21,
-                  height: 1.45,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primaryDark,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
   }
 }

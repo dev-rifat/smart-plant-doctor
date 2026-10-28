@@ -54,14 +54,14 @@ class _ProfilePageState extends State<ProfilePage> {
         }
 
         if (state is AuthLoggedOut) {
-          // Logging out also forgets the voice-setup profile, so the next
-          // person on this phone starts with the spoken setup.
-          getIt<FarmerProfileRepository>().clear().whenComplete(() {
+          // The profile stays, so the farmer logs back in by face or
+          // mobile number.
+          getIt<FarmerProfileRepository>().setLoggedIn(false).whenComplete(() {
             if (!context.mounted) return;
             Navigator.of(
               context,
               rootNavigator: true,
-            ).pushNamedAndRemoveUntil(AppRouter.onboarding, (route) => false);
+            ).pushNamedAndRemoveUntil(AppRouter.voiceLogin, (route) => false);
           });
         }
       },
@@ -166,7 +166,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                         ),
                                       )
                                     : const Icon(Icons.logout_rounded),
-                                label: const Text('নতুন করে শুরু করুন'),
+                                label: const Text('লগআউট'),
                               ),
                               const SizedBox(height: 12),
                               FutureBuilder<PackageInfo>(
@@ -203,9 +203,9 @@ class _ProfilePageState extends State<ProfilePage> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('নতুন করে শুরু করবেন?'),
+        title: const Text('লগআউট করবেন?'),
         content: const Text(
-          'আপনার নাম, জেলা ও ফসলের তথ্য মুছে যাবে। আবার কথা বলে বা লিখে দিতে হবে।',
+          'আবার ঢুকতে মুখের ছবি তুলতে হবে, অথবা মোবাইল নম্বর বলতে হবে।',
         ),
         actions: [
           TextButton(
@@ -217,10 +217,7 @@ class _ProfilePageState extends State<ProfilePage> {
               Navigator.pop(dialogContext);
               context.read<AuthCubit>().logout();
             },
-            child: const Text(
-              'মুছে ফেলুন',
-              style: TextStyle(color: Colors.red),
-            ),
+            child: const Text('লগআউট', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),

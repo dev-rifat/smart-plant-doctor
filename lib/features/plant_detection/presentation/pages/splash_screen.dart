@@ -52,8 +52,13 @@ class _SplashScreenState extends State<SplashScreen>
       return AppRouter.home; // phone + password account
     }
     try {
-      final profile = await getIt<FarmerProfileRepository>().load();
-      return profile == null ? AppRouter.onboarding : AppRouter.home;
+      final profiles = getIt<FarmerProfileRepository>();
+      final profile = await profiles.load();
+      if (profile == null) return AppRouter.onboarding;
+      // Stays logged in; after a logout, face or phone number login.
+      return await profiles.isLoggedIn()
+          ? AppRouter.home
+          : AppRouter.voiceLogin;
     } catch (_) {
       // load() reads the phone first, so it only fails when there is no
       // local profile and the cloud is unreachable: set up again.

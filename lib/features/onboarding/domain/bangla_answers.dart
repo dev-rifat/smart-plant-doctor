@@ -1,3 +1,5 @@
+import 'package:plant_health/core/utils/bangla_format.dart';
+
 /// Understands short spoken answers during the voice setup: yes/no, a
 /// name, one of Bangladesh's 64 districts, a crop.
 ///
@@ -184,4 +186,45 @@ abstract final class BanglaAnswers {
     }
     return null;
   }
+
+  /// Spoken digits, as the recognizer may write them out.
+  static const _digitWords = {
+    'শূন্য': '0', 'শুন্য': '0', 'জিরো': '0', 'zero': '0',
+    'এক': '1', 'ওয়ান': '1', 'one': '1',
+    'দুই': '2', 'দু': '2', 'টু': '2', 'two': '2',
+    'তিন': '3', 'থ্রি': '3', 'three': '3',
+    'চার': '4', 'ফোর': '4', 'four': '4',
+    'পাঁচ': '5', 'ফাইভ': '5', 'five': '5',
+    // য় comes either as one character or as য + nukta.
+    'ছ\u09DF': '6', 'ছ\u09AF\u09BC': '6', 'ছ': '6', 'সিক্স': '6', 'six': '6',
+    'সাত': '7', 'সেভেন': '7', 'seven': '7',
+    'আট': '8', 'এইট': '8', 'eight': '8',
+    'ন\u09DF': '9', 'ন\u09AF\u09BC': '9', 'নাইন': '9', 'nine': '9',
+  };
+
+  /// A Bangladeshi mobile number as 11 ASCII digits ("01712345678"), from
+  /// digits in either script, spoken digit words, or with +88; else null.
+  static String? phone(String text) {
+    final words = {
+      for (final e in _digitWords.entries) normalize(e.key): e.value,
+    };
+    final digits = StringBuffer();
+    final t = normalize(BanglaFormat.asciiDigits(text)).replaceAll('+', ' ');
+    for (final token in t.split(' ')) {
+      if (RegExp(r'^\d+$').hasMatch(token)) {
+        digits.write(token);
+      } else if (words[token] != null) {
+        digits.write(words[token]);
+      }
+    }
+    var number = digits.toString();
+    if (number.length == 13 && number.startsWith('88')) {
+      number = number.substring(2);
+    }
+    return RegExp(r'^01[3-9]\d{8}$').hasMatch(number) ? number : null;
+  }
+
+  /// "০ ১ ৭ ১ ২ …" so the number is read out digit by digit.
+  static String spokenPhone(String phone) =>
+      BanglaFormat.digits(phone.split('').join(' '));
 }

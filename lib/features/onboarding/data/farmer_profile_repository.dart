@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -8,11 +10,20 @@ class FarmerProfile {
     required this.name,
     required this.district,
     required this.primaryCrop,
+    this.phone,
+    this.face,
   });
 
   final String name;
   final String district;
   final String primaryCrop;
+
+  /// Mobile number for logging in when the face doesn't match.
+  final String? phone;
+
+  /// Face embedding from the signup photo. Stays on this phone only - it is
+  /// biometric data and is never sent to the cloud.
+  final List<double>? face;
 }
 
 /// Profile from the voice setup. Saved on the phone first so setup always
@@ -29,6 +40,9 @@ class FarmerProfileRepository {
   static const _kName = 'profile.name';
   static const _kDistrict = 'profile.district';
   static const _kCrop = 'profile.primaryCrop';
+  static const _kPhone = 'profile.phone';
+  static const _kFace = 'profile.face';
+  static const _kLoggedIn = 'profile.loggedIn';
 
   /// Reuses the existing session, otherwise creates an anonymous account.
   /// Returns null when no account can be made; the app still works.
@@ -46,10 +60,18 @@ class FarmerProfileRepository {
     final prefs = await SharedPreferences.getInstance();
     final name = prefs.getString(_kName);
     if (name != null) {
+      final face = prefs.getString(_kFace);
       return FarmerProfile(
         name: name,
         district: prefs.getString(_kDistrict) ?? '',
         primaryCrop: prefs.getString(_kCrop) ?? '',
+        phone: prefs.getString(_kPhone),
+        face: face == null
+            ? null
+            : (jsonDecode(face) as List)
+                  .cast<num>()
+                  .map((v) => v.toDouble())
+                  .toList(),
       );
     }
     // Reinstalled app with a cloud copy.
@@ -64,11 +86,30 @@ class FarmerProfileRepository {
     );
   }
 
-  /// Forgets the profile on this phone (logout); the cloud copy stays with
-  /// the account.
+  /// Stays logged in until the farmer logs out; profiles saved before
+  /// login existed count as logged in.
+  Future<bool> isLoggedIn() async =>
+      (await SharedPreferences.getInstance()).getBool(_kLoggedIn) ?? true;
+
+  /// Logout keeps the profile, so the farmer can log back in by face or
+  /// phone number.
+  Future<void> setLoggedIn(bool value) async =>
+      (await SharedPreferences.getInstance()).setBool(_kLoggedIn, value);
+
+  /// Forgets the farmer on this phone ("new farmer"); the cloud copy stays
+  /// with the account.
   Future<void> clear() async {
     final prefs = await SharedPreferences.getInstance();
-    await Future.wait([_kName, _kDistrict, _kCrop].map(prefs.remove));
+    await Future.wait(
+      [
+        _kName,
+        _kDistrict,
+        _kCrop,
+        _kPhone,
+        _kFace,
+        _kLoggedIn,
+      ].map(prefs.remove),
+    );
   }
 
   /// Always saves on the phone; the cloud copy is best effort.
@@ -77,6 +118,9 @@ class FarmerProfileRepository {
     await prefs.setString(_kName, p.name);
     await prefs.setString(_kDistrict, p.district);
     await prefs.setString(_kCrop, p.primaryCrop);
+    if (p.phone != null) await prefs.setString(_kPhone, p.phone!);
+    if (p.face != null) await prefs.setString(_kFace, jsonEncode(p.face));
+    await prefs.setBool(_kLoggedIn, true);
 
     final uid = await ensureSignedIn();
     if (uid == null) return;
