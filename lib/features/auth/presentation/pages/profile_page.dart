@@ -1,3 +1,5 @@
+import 'package:plant_health/core/di/injection.dart';
+import 'package:plant_health/features/onboarding/data/farmer_profile_repository.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -16,6 +18,10 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   late final Future<PackageInfo> _packageInfoFuture;
 
+  /// Name, district and crop from the voice setup (kept on the phone).
+  late final Future<FarmerProfile?> _profileFuture =
+      getIt<FarmerProfileRepository>().load().catchError((_) => null);
+
   @override
   void initState() {
     super.initState();
@@ -24,10 +30,19 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    return FutureBuilder<FarmerProfile?>(
+      future: _profileFuture,
+      builder: (context, snap) => _build(context, snap.data),
+    );
+  }
+
+  Widget _build(BuildContext context, FarmerProfile? farmer) {
     final user = FirebaseAuth.instance.currentUser;
-    final displayName = user?.displayName?.trim().isNotEmpty == true
-        ? user!.displayName!
-        : 'ব্যবহারকারী';
+    final displayName =
+        farmer?.name ??
+        (user?.displayName?.trim().isNotEmpty == true
+            ? user!.displayName!
+            : 'ব্যবহারকারী');
     final phoneNumber = _phoneFromEmail(user?.email);
 
     return BlocListener<AuthCubit, AuthState>(
@@ -39,11 +54,14 @@ class _ProfilePageState extends State<ProfilePage> {
         }
 
         if (state is AuthLoggedOut) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
+          // Logging out also forgets the voice-setup profile, so the next
+          // person on this phone starts with the spoken setup.
+          getIt<FarmerProfileRepository>().clear().whenComplete(() {
+            if (!context.mounted) return;
             Navigator.of(
               context,
               rootNavigator: true,
-            ).pushNamedAndRemoveUntil(AppRouter.login, (route) => false);
+            ).pushNamedAndRemoveUntil(AppRouter.onboarding, (route) => false);
           });
         }
       },
@@ -91,23 +109,46 @@ class _ProfilePageState extends State<ProfilePage> {
                                     ?.copyWith(fontWeight: FontWeight.w700),
                               ),
                               const SizedBox(height: 4),
-                              Text(
-                                'নাম্বার: $phoneNumber',
-                                textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
+                              if (farmer != null && farmer.district.isNotEmpty)
+                                Text(
+                                  '${farmer.district} জেলা • ${farmer.primaryCrop} চাষি',
+                                  textAlign: TextAlign.center,
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                )
+                              else if (phoneNumber != '-')
+                                Text(
+                                  'নাম্বার: $phoneNumber',
+                                  textAlign: TextAlign.center,
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
                               const SizedBox(height: 18),
                               _ProfileInfoTile(
                                 icon: Icons.person_outline_rounded,
                                 title: 'ইউজার নাম',
                                 value: displayName,
                               ),
-                              const SizedBox(height: 10),
-                              _ProfileInfoTile(
-                                icon: Icons.phone_android_rounded,
-                                title: 'মোবাইল নাম্বার',
-                                value: phoneNumber,
-                              ),
+                              if (farmer != null) ...[
+                                const SizedBox(height: 10),
+                                _ProfileInfoTile(
+                                  icon: Icons.location_on_outlined,
+                                  title: 'জেলা',
+                                  value: farmer.district,
+                                ),
+                                const SizedBox(height: 10),
+                                _ProfileInfoTile(
+                                  icon: Icons.grass_rounded,
+                                  title: 'প্রধান ফসল',
+                                  value: farmer.primaryCrop,
+                                ),
+                              ],
+                              if (phoneNumber != '-') ...[
+                                const SizedBox(height: 10),
+                                _ProfileInfoTile(
+                                  icon: Icons.phone_android_rounded,
+                                  title: 'মোবাইল নাম্বার',
+                                  value: phoneNumber,
+                                ),
+                              ],
                               const SizedBox(height: 10),
                               const _ProfileInfoTile(
                                 icon: Icons.language_rounded,

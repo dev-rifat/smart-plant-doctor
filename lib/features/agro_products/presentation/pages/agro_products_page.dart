@@ -1,3 +1,4 @@
+import 'package:plant_health/core/config/app_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:plant_health/core/di/injection.dart';
@@ -72,13 +73,17 @@ class _AgroProductsViewState extends State<_AgroProductsView> {
         title: const Text('কৃষি ওষুধ ও পণ্য'),
         actions: const [CartIconButton(), SizedBox(width: 4)],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _openChat,
-        backgroundColor: const Color(0xFF2E7D32),
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.auto_awesome),
-        label: const Text('AI সহায়ক'),
-      ),
+      // The AI assistant needs a Gemini key; without one it would only show
+      // an error, so its entry points are hidden (the catalog still works).
+      floatingActionButton: AppConfig.hasGeminiApiKey
+          ? FloatingActionButton.extended(
+              onPressed: _openChat,
+              backgroundColor: const Color(0xFF2E7D32),
+              foregroundColor: Colors.white,
+              icon: const Icon(Icons.auto_awesome),
+              label: const Text('AI সহায়ক'),
+            )
+          : null,
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -98,14 +103,16 @@ class _AgroProductsViewState extends State<_AgroProductsView> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _AiBanner(
-                          onTap: () => _openChat(
-                            question: _searchController.text.trim().isEmpty
-                                ? null
-                                : _searchController.text.trim(),
+                        if (AppConfig.hasGeminiApiKey) ...[
+                          _AiBanner(
+                            onTap: () => _openChat(
+                              question: _searchController.text.trim().isEmpty
+                                  ? null
+                                  : _searchController.text.trim(),
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 14),
+                          const SizedBox(height: 14),
+                        ],
                         _SearchField(
                           controller: _searchController,
                           onChanged: context.read<ProductCatalogCubit>().search,
@@ -372,19 +379,22 @@ class _EmptyResult extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'সমস্যাটি AI সহায়ককে বিস্তারিত বলুন, সে সঠিক পণ্য খুঁজে দেবে।',
+            AppConfig.hasGeminiApiKey
+                ? 'সমস্যাটি AI সহায়ককে বিস্তারিত বলুন, সে সঠিক পণ্য খুঁজে দেবে।'
+                : 'অন্য নামে বা রোগের নাম লিখে আবার খুঁজুন।',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey.shade700),
           ),
           const SizedBox(height: 14),
-          FilledButton.icon(
-            onPressed: onAskAi,
-            icon: const Icon(Icons.auto_awesome),
-            label: const Text('AI কে জিজ্ঞাসা করুন'),
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF2E7D32),
+          if (AppConfig.hasGeminiApiKey)
+            FilledButton.icon(
+              onPressed: onAskAi,
+              icon: const Icon(Icons.auto_awesome),
+              label: const Text('AI কে জিজ্ঞাসা করুন'),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF2E7D32),
+              ),
             ),
-          ),
         ],
       ),
     );

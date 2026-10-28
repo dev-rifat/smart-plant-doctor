@@ -8,8 +8,11 @@ import 'package:plant_health/features/rice_diagnosis/domain/rice_diagnosis.dart'
 /// One place for the wording so the screen and the voice never disagree,
 /// and so "নিশ্চিত নই" is said the same way everywhere.
 abstract final class DiagnosisWording {
+  /// Rounded DOWN and capped at 99%: 0.9999 must never read "100%" (no
+  /// diagnosis is certain), and 0.949 must not read "95%" next to "not
+  /// sure" when the cut-off is 0.95.
   static String percent(double p) =>
-      '${BanglaFormat.digits((p * 100).round())}%';
+      '${BanglaFormat.digits((p * 100).floor().clamp(0, 99))}%';
 
   static String issue(PhotoIssue issue) => switch (issue) {
     PhotoIssue.tooDark => 'ছবিটি বেশি অন্ধকার।',

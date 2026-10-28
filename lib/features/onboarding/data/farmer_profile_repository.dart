@@ -64,6 +64,13 @@ class FarmerProfileRepository {
     );
   }
 
+  /// Forgets the profile on this phone (logout); the cloud copy stays with
+  /// the account.
+  Future<void> clear() async {
+    final prefs = await SharedPreferences.getInstance();
+    await Future.wait([_kName, _kDistrict, _kCrop].map(prefs.remove));
+  }
+
   /// Always saves on the phone; the cloud copy is best effort.
   Future<void> save(FarmerProfile p) async {
     final prefs = await SharedPreferences.getInstance();

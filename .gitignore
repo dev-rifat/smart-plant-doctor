@@ -57,3 +57,4 @@ __pycache__/
 .ipynb_checkpoints/
 ml/reports/embeddings.npz
 ml/data/raw/external/
+demo/

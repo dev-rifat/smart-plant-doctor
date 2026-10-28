@@ -166,6 +166,12 @@ void main() {
       expect(DiagnosisWording.uncertainReason(d), contains('ভিন্ন ভিন্ন রোগ'));
     });
 
+    test('percent never says 100% and never rounds up past the cut-off', () {
+      expect(DiagnosisWording.percent(0.9999), '৯৯%');
+      expect(DiagnosisWording.percent(0.949), '৯৪%');
+      expect(DiagnosisWording.percent(0.5), '৫০%');
+    });
+
     test('healthy is not presented as a disease', () {
       final d = diagnosis({'Healthy': 0.95});
       expect(

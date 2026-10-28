@@ -100,7 +100,9 @@ class _VoiceAssistantPanelState extends State<VoiceAssistantPanel> {
                   ),
                 ),
               const SizedBox(height: 22),
-              Center(child: _LivingMic(state: state, cubit: cubit)),
+              Center(
+                child: _LivingMic(state: state, cubit: cubit),
+              ),
               const SizedBox(height: 12),
               _StatusLine(state: state),
               if (state.voiceProblem) ...[
