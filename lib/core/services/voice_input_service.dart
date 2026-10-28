@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:plant_health/core/services/google_voice_dialog.dart';
 import 'package:speech_to_text/speech_recognition_error.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
@@ -39,7 +41,45 @@ class VoiceInputService {
   /// of it - on phones whose default recognizer has no Bangla (e.g. the
   /// offline "Speech Services by Google" without Bangla data) this is the
   /// only symptom. The fix is a phone setting: default voice input → Google.
-  bool get banglaRecognitionLooksBroken => _noMatchStreak >= 2;
+  bool get banglaRecognitionLooksBroken =>
+      _noMatchStreak >= 2 && !Platform.isAndroid;
+
+  /// Android: listen through Google's speech dialog instead of the plugin.
+  /// Chosen up front when the default recognizer is the offline one without
+  /// Bangla, or after it keeps failing; null = not decided yet.
+  bool? _dialogMode;
+
+  Future<bool> _useDialog() async {
+    if (!Platform.isAndroid) return false;
+    if (_noMatchStreak >= 2) {
+      // Speech was heard twice but not understood: switch for good.
+      _noMatchStreak = 0;
+      _dialogMode = true;
+    }
+    return _dialogMode ??= await GoogleVoiceDialog.isNeeded();
+  }
+
+  Future<bool> _startWithDialog(
+    void Function(String text, bool isFinal) onText,
+    VoidCallback onStopped,
+  ) async {
+    _lastErrorCode = null;
+    final String? text;
+    try {
+      text = await GoogleVoiceDialog.recognize();
+    } on PlatformException catch (e) {
+      debugPrint('🎙️ Google speech dialog unavailable: ${e.code}');
+      _dialogMode = false; // back to the plugin next time
+      return false;
+    }
+    if (text != null && text.trim().isNotEmpty) {
+      onText(text.trim(), true);
+    } else {
+      _lastErrorCode = 'error_speech_timeout'; // nothing heard / closed
+    }
+    onStopped();
+    return true;
+  }
 
   /// Initialises the recognizer and asks for mic / speech permissions.
   /// Returns false if the device has no recognizer or permission is denied.
@@ -105,7 +145,7 @@ class VoiceInputService {
   /// Whether Bangla recognition is available. When false (some iOS
   /// devices), listening falls back to the device's default language and
   /// the AI assistant converts any romanised text back to Bangla.
-  bool get supportsBangla => _banglaLocaleId != null;
+  bool get supportsBangla => _dialogMode == true || _banglaLocaleId != null;
 
   /// Starts listening. [onText] fires for partial and final results so the
   /// text field can update live while the farmer is still speaking.
@@ -114,6 +154,7 @@ class VoiceInputService {
     required VoidCallback onStopped,
     void Function(String message)? onError,
   }) async {
+    if (await _useDialog()) return _startWithDialog(onText, onStopped);
     if (!await initialize()) return false;
 
     _lastErrorCode = null;
