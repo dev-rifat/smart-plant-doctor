@@ -11,6 +11,7 @@ import 'package:plant_health/features/auth/presentation/pages/profile_page.dart'
 import 'package:plant_health/features/community/presentation/community_page.dart';
 import 'package:plant_health/features/home/domain/spray_advice.dart';
 import 'package:plant_health/features/home/presentation/widgets/home_greeting.dart';
+import 'package:plant_health/features/onboarding/presentation/pages/crop_select_page.dart';
 import 'package:plant_health/features/onboarding/data/farmer_profile_repository.dart';
 import 'package:plant_health/features/rice_diagnosis/presentation/pages/rice_diagnosis_page.dart';
 import 'package:plant_health/features/voice_assistant/data/local_command_responder.dart';
@@ -314,7 +315,7 @@ class _SectionTitle extends StatelessWidget {
   );
 }
 
-/// The farmer's crop. Only rice is supported today.
+/// The farmer's crop, and "+" to see the other crops (coming soon).
 class _CropRow extends StatelessWidget {
   const _CropRow();
 
@@ -337,6 +338,30 @@ class _CropRow extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             const Text('ধান', style: TextStyle(fontSize: 13)),
+          ],
+        ),
+        const SizedBox(width: 14),
+        Column(
+          children: [
+            Material(
+              color: AppColors.primary,
+              shape: const CircleBorder(),
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const CropSelectPage(fromHome: true),
+                  ),
+                ),
+                child: const SizedBox(
+                  width: 64,
+                  height: 64,
+                  child: Icon(Icons.add_rounded, color: Colors.white, size: 32),
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text('ফসল যোগ', style: TextStyle(fontSize: 13)),
           ],
         ),
       ],

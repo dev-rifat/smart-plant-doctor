@@ -4,10 +4,14 @@ import 'package:plant_health/core/navigation/app_router.dart';
 import 'package:plant_health/core/services/voice_output_service.dart';
 import 'package:plant_health/core/theme/app_colors.dart';
 
-/// Shown once after signup: the farmer picks their crop. Only rice has a
-/// disease model today, so the other crops are shown but switched off.
+/// Shown after signup, and from "+" on the home crop row: the farmer picks
+/// their crop. Only rice has a disease model today, so the other crops are
+/// shown but switched off.
 class CropSelectPage extends StatefulWidget {
-  const CropSelectPage({super.key});
+  const CropSelectPage({super.key, this.fromHome = false});
+
+  /// Opened from home: "পরবর্তী" just goes back.
+  final bool fromHome;
 
   /// (emoji, name, available)
   static const crops = [
@@ -37,7 +41,8 @@ class CropSelectPage extends StatefulWidget {
 }
 
 class _CropSelectPageState extends State<CropSelectPage> {
-  String? _picked;
+  /// From home rice is already the farmer's crop.
+  late String? _picked = widget.fromHome ? 'ধান' : null;
 
   @override
   void initState() {
@@ -59,13 +64,20 @@ class _CropSelectPageState extends State<CropSelectPage> {
 
   void _next() {
     getIt<VoiceOutputService>().stop();
-    Navigator.pushNamedAndRemoveUntil(context, AppRouter.home, (_) => false);
+    if (widget.fromHome) {
+      Navigator.of(context).pop();
+    } else {
+      Navigator.pushNamedAndRemoveUntil(context, AppRouter.home, (_) => false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF6F8F6),
+      appBar: widget.fromHome
+          ? AppBar(backgroundColor: Colors.white, title: const Text('ফসল'))
+          : null,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
