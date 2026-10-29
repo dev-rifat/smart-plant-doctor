@@ -1,7 +1,7 @@
 rules_version = '2';
 
-// Farmers can create orders and read/cancel their own. Only the shop
-// (via the Firebase console or an admin SDK) can confirm/ship/deliver.
+// Farmer profiles are private; community posts are readable by every
+// signed-in farmer, with each write checked below.
 service cloud.firestore {
   match /databases/{database}/documents {
     // Farmer profile from the voice setup: owner only, known fields only.
@@ -24,30 +24,66 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    match /orders/{orderId} {
-      allow read: if request.auth != null
-        && resource.data.userId == request.auth.uid;
+    // Community questions: any signed-in farmer reads and asks; only the
+    // author deletes. Others may only add/remove their own like or bump
+    // the answer count by one (together with writing that answer).
+    match /posts/{postId} {
+      allow read: if request.auth != null;
 
       allow create: if request.auth != null
-        && request.resource.data.userId == request.auth.uid
-        && request.resource.data.status == 'pending'
-        && request.resource.data.paymentMethod == 'cod'
-        && request.resource.data.lines is list
-        && request.resource.data.lines.size() > 0
-        && request.resource.data.lines.size() <= 50
-        && request.resource.data.grandTotal is int
-        && request.resource.data.grandTotal > 0
+        && request.resource.data.keys().hasOnly(['authorId', 'authorName',
+             'district', 'crop', 'title', 'body', 'photo', 'answerCount',
+             'likes', 'createdAt'])
+        && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.authorName is string
+        && request.resource.data.authorName.size() <= 40
+        && request.resource.data.district is string
+        && request.resource.data.district.size() <= 30
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 200
+        && request.resource.data.body is string
+        && request.resource.data.body.size() <= 2500
+        && (!('photo' in request.resource.data)
+            || (request.resource.data.photo is string
+                && request.resource.data.photo.size() <= 900000))
+        && request.resource.data.answerCount == 0
+        && request.resource.data.likes.size() == 0
         && request.resource.data.createdAt == request.time;
 
-      // Cancel only: status pending → cancelled, nothing else may change.
-      allow update: if request.auth != null
-        && resource.data.userId == request.auth.uid
-        && resource.data.status == 'pending'
-        && request.resource.data.status == 'cancelled'
-        && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['status']);
+      allow update: if request.auth != null && (
+        (request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['likes'])
+          && (request.resource.data.likes.toSet()
+                .difference(resource.data.likes.toSet())
+                .hasOnly([request.auth.uid])
+              && resource.data.likes.toSet()
+                .difference(request.resource.data.likes.toSet())
+                .hasOnly([request.auth.uid])))
+        || (request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['answerCount'])
+            && request.resource.data.answerCount
+                 == resource.data.answerCount + 1));
 
-      allow delete: if false;
+      allow delete: if request.auth != null
+        && resource.data.authorId == request.auth.uid;
+
+      match /answers/{answerId} {
+        allow read: if request.auth != null;
+
+        allow create: if request.auth != null
+          && request.resource.data.keys().hasOnly(
+               ['authorId', 'authorName', 'text', 'createdAt'])
+          && request.resource.data.authorId == request.auth.uid
+          && request.resource.data.authorName is string
+          && request.resource.data.authorName.size() <= 40
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 1000
+          && request.resource.data.createdAt == request.time;
+
+        allow update, delete: if false;
+      }
     }
   }
 }

@@ -2,6 +2,7 @@
 /// This file contains all the dependency injection configuration using GetIt
 /// Place all service registrations here
 
+import 'package:plant_health/features/community/data/community_repository.dart';
 import 'package:plant_health/features/voice_login/data/farmer_account_repository.dart';
 import 'package:get_it/get_it.dart';
 import 'package:image_picker/image_picker.dart';
@@ -51,4 +52,5 @@ void setupServiceLocator() {
   getIt.registerLazySingleton<RiceAdviceRepository>(
     () => RiceAdviceRepository(),
   );
+  getIt.registerLazySingleton<CommunityRepository>(() => CommunityRepository());
 }
