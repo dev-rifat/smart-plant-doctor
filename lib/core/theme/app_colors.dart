@@ -1,5 +1,5 @@
-/// App Color Constants
-/// This file contains all color definitions used in the app
+// App Color Constants
+// This file contains all color definitions used in the app
 
 import 'package:flutter/material.dart';
 

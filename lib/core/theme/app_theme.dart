@@ -1,5 +1,5 @@
-/// App Theme Configuration
-/// This file defines the complete theme for the application
+// App Theme Configuration
+// This file defines the complete theme for the application
 
 import 'package:flutter/material.dart';
 import 'app_colors.dart';

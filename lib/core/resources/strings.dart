@@ -1,5 +1,5 @@
-/// App Strings
-/// This file contains all string constants used throughout the app
+// App Strings
+// This file contains all string constants used throughout the app
 
 class AppStrings {
   // App Name
@@ -18,8 +18,8 @@ class AppStrings {
 
   // Errors
   static const String error = 'Error';
-  static const String something_went_wrong = 'Something went wrong';
-  static const String please_try_again = 'Please try again';
+  static const String somethingWentWrong = 'Something went wrong';
+  static const String pleaseTryAgain = 'Please try again';
 
   // Buttons
   static const String submit = 'Submit';

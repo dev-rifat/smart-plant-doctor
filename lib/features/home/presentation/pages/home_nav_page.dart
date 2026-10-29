@@ -876,7 +876,7 @@ class _WeatherUpdateCard extends StatelessWidget {
                                 imageCaption,
                                 style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(
-                                      color: Colors.white.withOpacity(0.95),
+                                      color: Colors.white.withValues(alpha: 0.95),
                                     ),
                               ),
                             ],

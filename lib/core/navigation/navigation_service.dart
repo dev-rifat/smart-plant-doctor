@@ -1,5 +1,5 @@
-/// Navigation Service
-/// This service handles all navigation operations throughout the app
+// Navigation Service
+// This service handles all navigation operations throughout the app
 
 import 'package:flutter/material.dart';
 

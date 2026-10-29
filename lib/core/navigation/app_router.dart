@@ -1,5 +1,5 @@
-/// App Router Configuration
-/// This file defines all routes for the application
+// App Router Configuration
+// This file defines all routes for the application
 
 import 'package:flutter/material.dart';
 import 'package:plant_health/features/auth/presentation/pages/login_page.dart';
