@@ -342,7 +342,7 @@ class OnboardingCubit extends Cubit<OnboardingState> {
     }
     final done =
         'ধন্যবাদ ${state.name}! আপনার অ্যাকাউন্ট খোলা হয়েছে। '
-        'পরে লগইন করতে মোবাইল নম্বর আর পাসওয়ার্ড লাগবে। এখন মূল পাতায় যাচ্ছি।';
+        'পরে লগইন করতে মোবাইল নম্বর আর পাসওয়ার্ড লাগবে। এবার আপনার ফসল বেছে নিন।';
     emit(
       state.copyWith(
         step: SetupStep.done,

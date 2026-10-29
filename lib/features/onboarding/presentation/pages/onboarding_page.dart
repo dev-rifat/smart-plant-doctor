@@ -42,9 +42,10 @@ class _OnboardingView extends StatelessWidget {
               b.step == SetupStep.done &&
               b.mic == SetupMic.idle &&
               a.mic != SetupMic.idle,
+          // New farmer: pick the crop next, then home.
           listener: (context, _) => Navigator.pushNamedAndRemoveUntil(
             context,
-            AppRouter.home,
+            AppRouter.cropSelect,
             (_) => false,
           ),
         ),
