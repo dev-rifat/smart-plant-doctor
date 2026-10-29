@@ -3,7 +3,16 @@ import 'package:plant_health/core/di/injection.dart';
 import 'package:plant_health/core/services/voice_output_service.dart';
 
 /// Screens the guide knows how to explain.
-enum GuideScreen { login, signup, home, advice, diagnosis, products, profile }
+enum GuideScreen {
+  login,
+  signup,
+  home,
+  community,
+  advice,
+  diagnosis,
+  products,
+  profile,
+}
 
 /// Speaks a short "what to do here" line when a screen opens, so a farmer
 /// who can't read the screen still knows the next step.
@@ -46,9 +55,12 @@ class VoiceGuide {
           'আর তৃতীয় ঘরে একটি পাসওয়ার্ড লিখুন। পাসওয়ার্ড মনে রাখবেন। '
           'তারপর নিচের "সাইনআপ" বোতাম চাপুন।',
     GuideScreen.home =>
-      'এটা মূল পাতা। উপরের বড় সবুজ মাইক চেপে কথা বলুন। যেমন বলুন, '
-          '"ধানের রোগ পরীক্ষা করো", অথবা "আজ বৃষ্টি হবে কি"। '
-          'নিচের মাঝখানের বোতাম চাপলে সরাসরি রোগ পরীক্ষা খুলবে।',
+      'এটা আপনার ফসলের পাতা। ধানের পাতায় দাগ দেখলে "পাতার ছবি তুলুন" '
+          'বোতাম চাপুন। সবুজ মাইক চেপে কথাও বলতে পারেন, যেমন বলুন, '
+          '"আজ বৃষ্টি হবে কি"।',
+    GuideScreen.community =>
+      'কমিউনিটি। কৃষি বিশেষজ্ঞের সাথে কথা বলতে "১৬১২৩ নম্বরে কল করুন" '
+          'বোতাম চাপুন।',
     GuideScreen.advice =>
       'চাষাবাদ পরামর্শ। প্রতিটি পরামর্শের পাশের স্পিকার বোতাম চাপলে পড়ে শোনাব।',
     GuideScreen.diagnosis =>

@@ -1,25 +1,29 @@
-import 'package:plant_health/features/onboarding/data/farmer_profile_repository.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 import 'package:plant_health/core/di/injection.dart';
+import 'package:plant_health/core/resources/strings.dart';
 import 'package:plant_health/core/services/voice_input_service.dart';
 import 'package:plant_health/core/services/voice_output_service.dart';
-import 'package:plant_health/core/resources/strings.dart';
+import 'package:plant_health/core/theme/app_colors.dart';
 import 'package:plant_health/features/agro_products/presentation/pages/agro_products_page.dart';
 import 'package:plant_health/features/auth/presentation/pages/profile_page.dart';
+import 'package:plant_health/features/community/presentation/community_page.dart';
+import 'package:plant_health/features/home/domain/spray_advice.dart';
+import 'package:plant_health/features/home/presentation/pages/rice_tips_page.dart';
+import 'package:plant_health/features/home/presentation/widgets/home_greeting.dart';
+import 'package:plant_health/features/onboarding/data/farmer_profile_repository.dart';
 import 'package:plant_health/features/rice_diagnosis/presentation/pages/rice_diagnosis_page.dart';
 import 'package:plant_health/features/voice_assistant/data/local_command_responder.dart';
 import 'package:plant_health/features/voice_assistant/domain/voice_responder.dart';
 import 'package:plant_health/features/voice_assistant/presentation/cubit/voice_assistant_cubit.dart';
 import 'package:plant_health/features/voice_assistant/presentation/voice_guide.dart';
 import 'package:plant_health/features/voice_assistant/presentation/widgets/voice_assistant_panel.dart';
-import 'package:plant_health/features/home/presentation/pages/rice_tips_page.dart';
-import 'package:plant_health/features/home/presentation/widgets/home_greeting.dart';
 import 'package:plant_health/services/weather_service.dart';
 
+/// Three tabs: the farmer's crop (home), community help, and their profile.
+/// Disease check, tips, market and weather open as pages from the home tab.
 class HomeNavPage extends StatefulWidget {
   const HomeNavPage({super.key});
 
@@ -28,12 +32,10 @@ class HomeNavPage extends StatefulWidget {
 }
 
 class _HomeNavPageState extends State<HomeNavPage> {
-  final PersistentTabController _controller = PersistentTabController(
-    initialIndex: 0,
-  );
+  int _tab = 0;
 
   // Lives above the tabs so an answer keeps playing when a voice command
-  // switches tab ("রোগ পরীক্ষা করো" → scan tab).
+  // opens a page ("রোগ পরীক্ষা করো" → disease check).
   late final VoiceAssistantCubit _voice = VoiceAssistantCubit(
     getIt<VoiceInputService>(),
     getIt<VoiceOutputService>(),
@@ -41,6 +43,12 @@ class _HomeNavPageState extends State<HomeNavPage> {
   );
   late final StreamSubscription<VoiceAction> _voiceActions = _voice.actions
       .listen(_openForVoice);
+
+  static const _tabGuides = [
+    GuideScreen.home,
+    GuideScreen.community,
+    GuideScreen.profile,
+  ];
 
   @override
   void initState() {
@@ -67,14 +75,6 @@ class _HomeNavPageState extends State<HomeNavPage> {
     );
   }
 
-  static const _tabGuides = [
-    GuideScreen.home,
-    GuideScreen.advice,
-    GuideScreen.diagnosis,
-    GuideScreen.products,
-    GuideScreen.profile,
-  ];
-
   static Future<String?> _farmerDistrict() async {
     try {
       return (await getIt<FarmerProfileRepository>().load())?.district;
@@ -84,147 +84,105 @@ class _HomeNavPageState extends State<HomeNavPage> {
   }
 
   void _openForVoice(VoiceAction action) {
-    _controller.jumpToTab(switch (action) {
-      VoiceAction.openDiseaseCheck => 2,
-      VoiceAction.openProducts => 3,
-      VoiceAction.openProfile => 4,
-    });
+    switch (action) {
+      case VoiceAction.openDiseaseCheck:
+        _push(const RiceDiagnosisPage(), GuideScreen.diagnosis);
+      case VoiceAction.openProducts:
+        _push(const AgroProductsPage(), GuideScreen.products);
+      case VoiceAction.openProfile:
+        _select(2);
+    }
+  }
+
+  Future<void> _push(Widget page, GuideScreen guide) async {
+    await _voice.hush();
+    if (!mounted) return;
+    unawaited(getIt<VoiceGuide>().announce(guide));
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+  }
+
+  Future<void> _select(int i) async {
+    if (i == _tab) return;
+    setState(() => _tab = i);
+    if (i != 0) await _voice.hush();
+    await getIt<VoiceGuide>().announce(_tabGuides[i]);
   }
 
   @override
   void dispose() {
     _voiceActions.cancel();
     _voice.close();
-    _controller.dispose();
     super.dispose();
-  }
-
-  List<Widget> _buildScreens() {
-    return const [
-      _HomeOverviewTab(),
-      RiceTipsPage(),
-      // On-device model; replaces the Gemini photo check, which invented
-      // medicine names and doses.
-      RiceDiagnosisPage(),
-      AgroProductsPage(),
-      ProfilePage(),
-    ];
-  }
-
-  List<PersistentBottomNavBarItem> _navBarsItems(BuildContext context) {
-    final inactiveColor = Theme.of(context).brightness == Brightness.dark
-        ? const Color(0xFFAAC2AE)
-        : Colors.grey.shade600;
-
-    return [
-      PersistentBottomNavBarItem(
-        icon: const Icon(Icons.home_rounded),
-        title: 'হোম',
-        textStyle: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          inherit: false,
-        ),
-        activeColorPrimary: const Color(0xFF2E7D32),
-        inactiveColorPrimary: inactiveColor,
-      ),
-      PersistentBottomNavBarItem(
-        icon: const Icon(Icons.tips_and_updates_rounded),
-        title: 'পরামর্শ',
-        textStyle: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          inherit: false,
-        ),
-        activeColorPrimary: const Color(0xFF2E7D32),
-        inactiveColorPrimary: inactiveColor,
-      ),
-      PersistentBottomNavBarItem(
-        icon: const Icon(Icons.add, color: Colors.white),
-        title: 'রোগ পরীক্ষা',
-        textStyle: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          inherit: false,
-        ),
-        activeColorPrimary: const Color(0xFF2E7D32),
-        inactiveColorPrimary: inactiveColor,
-      ),
-      PersistentBottomNavBarItem(
-        icon: const Icon(Icons.medication_rounded),
-        title: 'বাজার',
-        textStyle: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          inherit: false,
-        ),
-        activeColorPrimary: const Color(0xFF2E7D32),
-        inactiveColorPrimary: inactiveColor,
-      ),
-      PersistentBottomNavBarItem(
-        icon: const Icon(Icons.person_rounded),
-        title: 'আমার তথ্য',
-        textStyle: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          inherit: false,
-        ),
-        activeColorPrimary: const Color(0xFF2E7D32),
-        inactiveColorPrimary: inactiveColor,
-      ),
-    ];
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(value: _voice, child: _buildTabs(context));
-  }
-
-  Widget _buildTabs(BuildContext context) {
-    return PersistentTabView(
-      context,
-      controller: _controller,
-      onItemSelected: (i) async {
-        if (i != 0) await _voice.hush();
-        await getIt<VoiceGuide>().announce(_tabGuides[i]);
-      },
-      screens: _buildScreens(),
-      items: _navBarsItems(context),
-      navBarHeight: 68,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      handleAndroidBackButtonPress: true,
-      resizeToAvoidBottomInset: true,
-      stateManagement: true,
-      hideNavigationBarWhenKeyboardAppears: true,
-      decoration: NavBarDecoration(
-        colorBehindNavBar: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: BorderRadius.circular(18),
+    return BlocProvider.value(
+      value: _voice,
+      child: Scaffold(
+        body: IndexedStack(
+          index: _tab,
+          children: [
+            _CropHomeTab(open: _push),
+            const CommunityPage(),
+            const ProfilePage(),
+          ],
+        ),
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: _tab,
+          onDestinationSelected: _select,
+          height: 68,
+          backgroundColor: Colors.white,
+          indicatorColor: AppColors.leafSoft,
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.spa_outlined),
+              selectedIcon: Icon(
+                Icons.spa_rounded,
+                color: AppColors.primaryDark,
+              ),
+              label: 'আপনার ফসল',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.forum_outlined),
+              selectedIcon: Icon(
+                Icons.forum_rounded,
+                color: AppColors.primaryDark,
+              ),
+              label: 'কমিউনিটি',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.account_circle_outlined),
+              selectedIcon: Icon(
+                Icons.account_circle_rounded,
+                color: AppColors.primaryDark,
+              ),
+              label: 'আপনি',
+            ),
+          ],
+        ),
       ),
-      popBehaviorOnSelectedNavBarItemPress: PopBehavior.all,
-      padding: const EdgeInsets.only(top: 8),
-      navBarStyle: NavBarStyle.style15,
     );
   }
 }
 
-class _HomeOverviewTab extends StatefulWidget {
-  const _HomeOverviewTab();
+typedef _Open = Future<void> Function(Widget page, GuideScreen guide);
+
+class _CropHomeTab extends StatefulWidget {
+  const _CropHomeTab({required this.open});
+
+  final _Open open;
 
   @override
-  State<_HomeOverviewTab> createState() => _HomeOverviewTabState();
+  State<_CropHomeTab> createState() => _CropHomeTabState();
 }
 
-class _HomeOverviewTabState extends State<_HomeOverviewTab> {
+class _CropHomeTabState extends State<_CropHomeTab> {
   final WeatherService _weatherService = const WeatherService();
-  late Future<WeatherInfo> _weatherFuture;
+  late Future<WeatherInfo> _weatherFuture = _loadWeather();
 
-  @override
-  void initState() {
-    super.initState();
-    _weatherFuture = _loadWeather();
-  }
-
-  /// Weather for the farmer's own district (from the voice setup).
+  /// Weather for the farmer's own district (from signup).
   Future<WeatherInfo> _loadWeather() async {
     String? district;
     try {
@@ -233,47 +191,538 @@ class _HomeOverviewTabState extends State<_HomeOverviewTab> {
     return _weatherService.fetchCurrentWeather(district: district);
   }
 
-  void _refreshWeather() {
-    setState(() {
-      _weatherFuture = _loadWeather();
-    });
-  }
+  void _refreshWeather() => setState(() => _weatherFuture = _loadWeather());
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        title: const Text(AppStrings.appName),
-        actions: const [
-          VoiceGuideButton(screen: GuideScreen.home),
-          SizedBox(width: 4),
-        ],
-      ),
-      body: Container(
-        width: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFF4F9F4), Color(0xFFEAF5EC)],
-          ),
-        ),
-        child: ListView(
+  void _openWeather() => Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (_) => Scaffold(
+        appBar: AppBar(title: const Text('আবহাওয়া')),
+        body: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            const HomeGreeting(),
-            const SizedBox(height: 16),
-            const VoiceAssistantPanel(),
-            const SizedBox(height: 20),
-            const QuickActions(),
-            const SizedBox(height: 20),
             _WeatherUpdateCard(
               weatherService: _weatherService,
               weatherFuture: _weatherFuture,
               onRefresh: _refreshWeather,
             ),
           ],
+        ),
+      ),
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final voice = context.read<VoiceAssistantCubit>();
+    return Scaffold(
+      backgroundColor: const Color(0xFFF6F8F6),
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.white,
+        title: const Text(AppStrings.appName),
+        actions: const [
+          VoiceGuideButton(screen: GuideScreen.home),
+          SizedBox(width: 4),
+        ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          _refreshWeather();
+          await _weatherFuture.catchError((_) => _placeholderWeather);
+        },
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [HomeGreeting(), SizedBox(height: 14), _CropRow()],
+              ),
+            ),
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFFE6F2EA), Color(0xFFF6F8F6)],
+                ),
+              ),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _WeatherStrip(
+                    future: _weatherFuture,
+                    service: _weatherService,
+                    onTap: _openWeather,
+                    onSpeak: voice.say,
+                  ),
+                  const SizedBox(height: 16),
+                  _DiagnoseCard(
+                    onTap: () => widget.open(
+                      const RiceDiagnosisPage(),
+                      GuideScreen.diagnosis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: _SectionTitle('কথা বলে জিজ্ঞেস করুন'),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: VoiceAssistantPanel(),
+            ),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
+              child: _SectionTitle('টুলস'),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+              child: Row(
+                children: [
+                  _Tool(
+                    icon: Icons.menu_book_rounded,
+                    label: 'চাষের\nপরামর্শ',
+                    onTap: () =>
+                        widget.open(const RiceTipsPage(), GuideScreen.advice),
+                  ),
+                  const SizedBox(width: 10),
+                  _Tool(
+                    icon: Icons.storefront_rounded,
+                    label: 'কৃষি\nবাজার',
+                    onTap: () => widget.open(
+                      const AgroProductsPage(),
+                      GuideScreen.products,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  _Tool(
+                    icon: Icons.cloud_outlined,
+                    label: 'বিস্তারিত\nআবহাওয়া',
+                    onTap: _openWeather,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static const _placeholderWeather = WeatherInfo(
+    temperature: 0,
+    feelsLike: 0,
+    humidity: 0,
+    rainMm: 0,
+    maxTemp: 0,
+    minTemp: 0,
+    rainChance: 0,
+    uvIndexMax: 0,
+    windSpeed: 0,
+    weatherCode: 0,
+    time: '',
+  );
+}
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Text(
+    text,
+    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+  );
+}
+
+/// The farmer's crops. Only rice is supported today; more come with the
+/// models for them.
+class _CropRow extends StatelessWidget {
+  const _CropRow();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Column(
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFFFFFBEA),
+                border: Border.all(color: const Color(0xFFE2C044), width: 2),
+              ),
+              alignment: Alignment.center,
+              child: const Text('🌾', style: TextStyle(fontSize: 30)),
+            ),
+            const SizedBox(height: 4),
+            const Text('ধান', style: TextStyle(fontSize: 13)),
+          ],
+        ),
+        const SizedBox(width: 14),
+        Column(
+          children: [
+            Material(
+              color: const Color(0xFFF1F3F1),
+              shape: const CircleBorder(),
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'এখন শুধু ধানের রোগ চেনা যায়। আরও ফসল আসছে।',
+                    ),
+                  ),
+                ),
+                child: const SizedBox(
+                  width: 64,
+                  height: 64,
+                  child: Icon(Icons.add_rounded, color: Colors.black45),
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'আরও ফসল',
+              style: TextStyle(fontSize: 13, color: Colors.black54),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Two small cards: today's weather and whether it suits spraying.
+class _WeatherStrip extends StatelessWidget {
+  const _WeatherStrip({
+    required this.future,
+    required this.service,
+    required this.onTap,
+    required this.onSpeak,
+  });
+
+  final Future<WeatherInfo> future;
+  final WeatherService service;
+  final VoidCallback onTap;
+  final Future<void> Function(String) onSpeak;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<WeatherInfo>(
+      future: future,
+      builder: (context, snap) {
+        final w = snap.data;
+        if (w == null) {
+          return _Pill(
+            onTap: onTap,
+            color: Colors.white,
+            child: Row(
+              children: [
+                const Icon(Icons.cloud_outlined, color: AppColors.primary),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    snap.hasError
+                        ? 'আবহাওয়া পাওয়া যায়নি। টেনে নামিয়ে আবার চেষ্টা করুন।'
+                        : 'আবহাওয়া আনছি…',
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        final spray = SprayAdvice.from(w);
+        final (Color bg, Color fg, IconData icon) = switch (spray.level) {
+          SprayLevel.good => (
+            const Color(0xFFE3F4E6),
+            AppColors.primaryDark,
+            Icons.check_circle_rounded,
+          ),
+          SprayLevel.careful => (
+            const Color(0xFFFDF0D5),
+            const Color(0xFF8A5300),
+            Icons.warning_amber_rounded,
+          ),
+          SprayLevel.avoid => (
+            const Color(0xFFFBE3E1),
+            const Color(0xFFB3261E),
+            Icons.block_rounded,
+          ),
+        };
+        return IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                flex: 4,
+                child: _Pill(
+                  onTap: onTap,
+                  color: Colors.white,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        w.place,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Text(
+                            '${w.temperature.round()}°C',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const Spacer(),
+                          Icon(
+                            w.rainChance >= 50
+                                ? Icons.grain_rounded
+                                : Icons.wb_cloudy_outlined,
+                            color: const Color(0xFF6C8EA4),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        'বৃষ্টি ${w.rainChance}%',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                flex: 6,
+                child: _Pill(
+                  onTap: () => onSpeak(
+                    'আজ স্প্রে করার অবস্থা: ${spray.label}। ${spray.reason}',
+                  ),
+                  color: bg,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'স্প্রে করার অবস্থা',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: fg.withValues(alpha: 0.8),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Icon(icon, color: fg, size: 20),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              spray.label,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: fg,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        spray.reason,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 12, color: fg),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _Pill extends StatelessWidget {
+  const _Pill({required this.child, required this.color, this.onTap});
+
+  final Widget child;
+  final Color color;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: color,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Padding(padding: const EdgeInsets.all(12), child: child),
+      ),
+    );
+  }
+}
+
+/// Photo → disease → what to do, with the one big button.
+class _DiagnoseCard extends StatelessWidget {
+  const _DiagnoseCard({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 18, 14, 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE3E8E4)),
+      ),
+      child: Column(
+        children: [
+          const Row(
+            children: [
+              _Step(
+                icon: Icons.photo_camera_rounded,
+                label: 'পাতার ছবি\nতুলুন',
+              ),
+              _Arrow(),
+              _Step(icon: Icons.biotech_rounded, label: 'রোগ\nচিনুন'),
+              _Arrow(),
+              _Step(icon: Icons.fact_check_rounded, label: 'করণীয়\nজানুন'),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25),
+                ),
+              ),
+              onPressed: onTap,
+              icon: const Icon(Icons.photo_camera_rounded),
+              label: const Text(
+                'পাতার ছবি তুলুন',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'ইন্টারনেট ছাড়াই ফোনে রোগ চেনে',
+            style: TextStyle(fontSize: 12, color: Colors.black54),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Step extends StatelessWidget {
+  const _Step({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 24,
+            backgroundColor: AppColors.leafSoft,
+            child: Icon(icon, color: AppColors.primaryDark, size: 24),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 13, height: 1.3),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Arrow extends StatelessWidget {
+  const _Arrow();
+
+  @override
+  Widget build(BuildContext context) => const Padding(
+    padding: EdgeInsets.only(bottom: 30),
+    child: Icon(Icons.chevron_right_rounded, color: Colors.black38),
+  );
+}
+
+class _Tool extends StatelessWidget {
+  const _Tool({required this.icon, required this.label, required this.onTap});
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE3E8E4)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  radius: 18,
+                  backgroundColor: AppColors.leafSoft,
+                  child: Icon(icon, color: AppColors.primaryDark, size: 20),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    height: 1.3,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

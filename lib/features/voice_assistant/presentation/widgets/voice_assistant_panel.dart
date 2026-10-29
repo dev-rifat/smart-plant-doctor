@@ -56,7 +56,7 @@ class _VoiceAssistantPanelState extends State<VoiceAssistantPanel> {
               end: Alignment.bottomRight,
               colors: [Color(0xFFE8F5E9), Color(0xFFFFF8E1)],
             ),
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(18),
             boxShadow: [
               BoxShadow(
                 color: AppColors.primary.withValues(alpha: 0.12),
@@ -65,7 +65,7 @@ class _VoiceAssistantPanelState extends State<VoiceAssistantPanel> {
               ),
             ],
           ),
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -87,10 +87,10 @@ class _VoiceAssistantPanelState extends State<VoiceAssistantPanel> {
                   padding: EdgeInsets.only(top: 6, left: 52),
                   child: Text(
                     'এই ফোনে বাংলা কণ্ঠ নেই, তাই উত্তর শুধু লেখায় দেখানো হচ্ছে।',
-                    style: TextStyle(fontSize: 14, color: Colors.black54),
+                    style: TextStyle(fontSize: 12, color: Colors.black54),
                   ),
                 ),
-              const SizedBox(height: 22),
+              const SizedBox(height: 12),
               Center(
                 child: _LivingMic(state: state, cubit: cubit),
               ),
@@ -99,13 +99,13 @@ class _VoiceAssistantPanelState extends State<VoiceAssistantPanel> {
                 const _NoBanglaNote()
               else
                 _StatusLine(state: state),
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
               TextField(
                 controller: _text,
                 focusNode: _focus,
                 minLines: 1,
                 maxLines: 3,
-                style: const TextStyle(fontSize: 17),
+                style: const TextStyle(fontSize: 15),
                 textInputAction: TextInputAction.send,
                 onSubmitted: (_) => _send(cubit),
                 decoration: InputDecoration(
@@ -116,9 +116,10 @@ class _VoiceAssistantPanelState extends State<VoiceAssistantPanel> {
                     borderRadius: BorderRadius.circular(24),
                     borderSide: BorderSide.none,
                   ),
+                  isDense: true,
                   contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 14,
+                    horizontal: 16,
+                    vertical: 12,
                   ),
                   suffixIcon: IconButton(
                     tooltip: 'পাঠান',
@@ -144,15 +145,15 @@ class _Avatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 42,
-      height: 42,
+      width: 34,
+      height: 34,
       decoration: const BoxDecoration(
         shape: BoxShape.circle,
         gradient: LinearGradient(
           colors: [Color(0xFF66BB6A), AppColors.primaryDark],
         ),
       ),
-      child: const Icon(Icons.eco_rounded, color: Colors.white, size: 24),
+      child: const Icon(Icons.eco_rounded, color: Colors.white, size: 20),
     );
   }
 }
@@ -168,7 +169,7 @@ class _Bubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bubble = Container(
-      padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+      padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
       decoration: BoxDecoration(
         color: fromFarmer ? AppColors.primary : Colors.white,
         borderRadius: BorderRadius.only(
@@ -193,8 +194,8 @@ class _Bubble extends StatelessWidget {
             child: Text(
               text,
               style: TextStyle(
-                fontSize: 18,
-                height: 1.45,
+                fontSize: 15,
+                height: 1.4,
                 color: fromFarmer ? Colors.white : Colors.black87,
               ),
             ),
@@ -215,7 +216,7 @@ class _Bubble extends StatelessWidget {
         if (fromFarmer) ...[
           const SizedBox(width: 10),
           const CircleAvatar(
-            radius: 21,
+            radius: 17,
             backgroundColor: Color(0xFFFFE0B2),
             child: Icon(Icons.person_rounded, color: Color(0xFF8D6E63)),
           ),
@@ -236,7 +237,7 @@ class _SpeakerButton extends StatelessWidget {
     final speaking = state.status == VoiceStatus.speaking;
     return IconButton.filledTonal(
       tooltip: speaking ? 'থামুন' : 'শুনুন',
-      iconSize: 26,
+      iconSize: 22,
       onPressed: speaking
           ? cubit.stopSpeaking
           : state.reply == null
@@ -315,8 +316,8 @@ class _LivingMicState extends State<_LivingMic>
             ? widget.cubit.stopListening
             : widget.cubit.startListening,
         child: SizedBox(
-          width: 170,
-          height: 170,
+          width: 120,
+          height: 120,
           child: AnimatedBuilder(
             animation: _anim,
             builder: (context, _) => Stack(
@@ -327,8 +328,8 @@ class _LivingMicState extends State<_LivingMic>
                     _Ring(progress: (_anim.value + offset) % 1, color: color),
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 250),
-                  width: 104,
-                  height: 104,
+                  width: 76,
+                  height: 76,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
@@ -349,7 +350,7 @@ class _LivingMicState extends State<_LivingMic>
                       : Icon(
                           listening ? Icons.stop_rounded : Icons.mic_rounded,
                           color: Colors.white,
-                          size: 52,
+                          size: 38,
                         ),
                 ),
               ],
@@ -369,7 +370,7 @@ class _Ring extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = 104 + 66 * progress;
+    final size = 76 + 44 * progress;
     return Container(
       width: size,
       height: size,
@@ -451,7 +452,7 @@ class _StatusLine extends StatelessWidget {
             text,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 15,
               fontWeight: FontWeight.w600,
               color: color,
             ),
@@ -482,12 +483,12 @@ class _NoBanglaNote extends StatelessWidget {
           const Expanded(
             child: Text(
               'এই ফোনে বাংলা কথা বোঝা যাচ্ছে না। নিচের বোতাম বা লেখা ব্যবহার করুন।',
-              style: TextStyle(fontSize: 15, color: Color(0xFF5D3A00)),
+              style: TextStyle(fontSize: 13, color: Color(0xFF5D3A00)),
             ),
           ),
           TextButton(
             onPressed: PhoneSettings.openVoiceInput,
-            child: const Text('ঠিক করুন', style: TextStyle(fontSize: 15)),
+            child: const Text('ঠিক করুন', style: TextStyle(fontSize: 13)),
           ),
         ],
       ),

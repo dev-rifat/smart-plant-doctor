@@ -59,7 +59,7 @@ class _LoginView extends StatelessWidget {
                     child: Text(
                       'লগইন',
                       style: TextStyle(
-                        fontSize: 22,
+                        fontSize: 19,
                         fontWeight: FontWeight.w700,
                         color: AppColors.primaryDark,
                       ),
@@ -83,7 +83,7 @@ class _LoginView extends StatelessWidget {
                             textAlign: TextAlign.center,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 18),
+                            style: const TextStyle(fontSize: 15),
                           ),
                         if (state.hint != null)
                           Text(
@@ -91,7 +91,7 @@ class _LoginView extends StatelessWidget {
                             textAlign: TextAlign.center,
                             maxLines: 2,
                             style: const TextStyle(
-                              fontSize: 18,
+                              fontSize: 15,
                               color: Color(0xFF8A5300),
                             ),
                           ),
@@ -112,7 +112,7 @@ class _LoginView extends StatelessWidget {
                       children: [
                         Text(
                           'নম্বর: ${state.phone}',
-                          style: const TextStyle(fontSize: 16),
+                          style: const TextStyle(fontSize: 14),
                         ),
                         TextButton(
                           onPressed: cubit.changePhone,
@@ -124,7 +124,7 @@ class _LoginView extends StatelessWidget {
                   const SizedBox(height: 28),
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(54),
+                      minimumSize: const Size.fromHeight(50),
                     ),
                     onPressed: state.step == LoginStep.checking
                         ? null
@@ -136,7 +136,7 @@ class _LoginView extends StatelessWidget {
                     icon: const Icon(Icons.person_add_alt_1_rounded),
                     label: const Text(
                       'নতুন অ্যাকাউন্ট খুলুন',
-                      style: TextStyle(fontSize: 18),
+                      style: TextStyle(fontSize: 15),
                     ),
                   ),
                 ],
@@ -185,25 +185,25 @@ class _Mic extends StatelessWidget {
           child: GestureDetector(
             onTap: canTap ? context.read<LoginCubit>().listenAgain : null,
             child: Container(
-              width: 120,
-              height: 120,
+              width: 92,
+              height: 92,
               decoration: BoxDecoration(
                 color: color,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
                     color: color.withValues(alpha: 0.4),
-                    blurRadius: state.mic == SetupMic.listening ? 30 : 12,
-                    spreadRadius: state.mic == SetupMic.listening ? 8 : 1,
+                    blurRadius: state.mic == SetupMic.listening ? 24 : 10,
+                    spreadRadius: state.mic == SetupMic.listening ? 6 : 1,
                   ),
                 ],
               ),
               child: checking
                   ? const Padding(
-                      padding: EdgeInsets.all(36),
+                      padding: EdgeInsets.all(28),
                       child: CircularProgressIndicator(color: Colors.white),
                     )
-                  : Icon(icon, color: Colors.white, size: 60),
+                  : Icon(icon, color: Colors.white, size: 44),
             ),
           ),
         ),
@@ -211,7 +211,7 @@ class _Mic extends StatelessWidget {
         Text(
           checking ? 'মিলিয়ে দেখছি…' : label,
           style: TextStyle(
-            fontSize: 20,
+            fontSize: 17,
             fontWeight: FontWeight.w600,
             color: color,
           ),
@@ -254,7 +254,7 @@ class _AnswerFieldState extends State<_AnswerField> {
           ? TextInputType.visiblePassword
           : TextInputType.phone,
       obscureText: widget.password && _hidden,
-      style: const TextStyle(fontSize: 20, letterSpacing: 1.2),
+      style: const TextStyle(fontSize: 17, letterSpacing: 1.2),
       onSubmitted: widget.onSubmit,
       decoration: InputDecoration(
         hintText: widget.password

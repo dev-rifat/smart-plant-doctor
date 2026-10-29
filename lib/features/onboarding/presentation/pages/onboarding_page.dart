@@ -77,7 +77,7 @@ class _OnboardingView extends StatelessWidget {
                           textAlign: TextAlign.center,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 18),
+                          style: const TextStyle(fontSize: 15),
                         ),
                       if (state.hint != null)
                         Text(
@@ -85,7 +85,7 @@ class _OnboardingView extends StatelessWidget {
                           textAlign: TextAlign.center,
                           maxLines: 2,
                           style: const TextStyle(
-                            fontSize: 18,
+                            fontSize: 15,
                             color: Color(0xFF8A5300),
                           ),
                         ),
@@ -107,7 +107,7 @@ class _OnboardingView extends StatelessWidget {
                   state.phoneTaken
                       ? FilledButton.icon(
                           style: FilledButton.styleFrom(
-                            minimumSize: const Size.fromHeight(56),
+                            minimumSize: const Size.fromHeight(50),
                           ),
                           onPressed: () => Navigator.pushReplacementNamed(
                             context,
@@ -116,7 +116,7 @@ class _OnboardingView extends StatelessWidget {
                           icon: const Icon(Icons.login_rounded),
                           label: const Text(
                             'লগইন করুন',
-                            style: TextStyle(fontSize: 18),
+                            style: TextStyle(fontSize: 15),
                           ),
                         )
                       : TextButton(
@@ -126,7 +126,7 @@ class _OnboardingView extends StatelessWidget {
                           ),
                           child: const Text(
                             'আগে অ্যাকাউন্ট খুলেছেন? লগইন করুন',
-                            style: TextStyle(fontSize: 17),
+                            style: TextStyle(fontSize: 15),
                           ),
                         ),
               ],
@@ -166,7 +166,7 @@ class _Progress extends StatelessWidget {
               size: 18,
               color: i <= index ? AppColors.primary : Colors.black38,
             ),
-            label: Text(labels[i], style: const TextStyle(fontSize: 15)),
+            label: Text(labels[i], style: const TextStyle(fontSize: 13)),
           ),
       ],
     );
@@ -215,25 +215,25 @@ class _MicIndicator extends StatelessWidget {
             onTap: canTap ? cubit.listenAgain : null,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 250),
-              width: 120,
-              height: 120,
+              width: 92,
+              height: 92,
               decoration: BoxDecoration(
                 color: color,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
                     color: color.withValues(alpha: 0.4),
-                    blurRadius: state.mic == SetupMic.listening ? 30 : 12,
-                    spreadRadius: state.mic == SetupMic.listening ? 8 : 1,
+                    blurRadius: state.mic == SetupMic.listening ? 24 : 10,
+                    spreadRadius: state.mic == SetupMic.listening ? 6 : 1,
                   ),
                 ],
               ),
               child: busy
                   ? const Padding(
-                      padding: EdgeInsets.all(36),
+                      padding: EdgeInsets.all(28),
                       child: CircularProgressIndicator(color: Colors.white),
                     )
-                  : Icon(icon, color: Colors.white, size: 60),
+                  : Icon(icon, color: Colors.white, size: 44),
             ),
           ),
         ),
@@ -242,7 +242,7 @@ class _MicIndicator extends StatelessWidget {
           // The hint below already says what to do; don't say it twice.
           state.mic == SetupMic.idle && state.hint != null ? '' : label,
           style: TextStyle(
-            fontSize: 20,
+            fontSize: 17,
             fontWeight: FontWeight.w600,
             color: color,
           ),
@@ -270,7 +270,7 @@ class _VoiceFixCard extends StatelessWidget {
           const Expanded(
             child: Text(
               'এই ফোনে বাংলা কথা বোঝা যাচ্ছে না। লিখে বা বেছে নিয়ে উত্তর দিন।',
-              style: TextStyle(fontSize: 15, color: Color(0xFF5D3A00)),
+              style: TextStyle(fontSize: 13, color: Color(0xFF5D3A00)),
             ),
           ),
           TextButton(
@@ -282,7 +282,7 @@ class _VoiceFixCard extends StatelessWidget {
                 );
               }
             },
-            child: const Text('ঠিক করুন', style: TextStyle(fontSize: 15)),
+            child: const Text('ঠিক করুন', style: TextStyle(fontSize: 13)),
           ),
         ],
       ),
@@ -332,7 +332,7 @@ class _FallbackState extends State<_Fallback> {
           itemCount: districts.length,
           separatorBuilder: (_, _) => const Divider(height: 1),
           itemBuilder: (context, i) => ListTile(
-            title: Text(districts[i], style: const TextStyle(fontSize: 20)),
+            title: Text(districts[i], style: const TextStyle(fontSize: 17)),
             onTap: () => Navigator.pop(context, districts[i]),
           ),
         ),
@@ -345,7 +345,7 @@ class _FallbackState extends State<_Fallback> {
   Widget build(BuildContext context) {
     final cubit = context.read<OnboardingCubit>();
     final s = widget.state;
-    const big = TextStyle(fontSize: 20, fontWeight: FontWeight.w600);
+    const big = TextStyle(fontSize: 17, fontWeight: FontWeight.w600);
 
     switch (s.step) {
       case SetupStep.confirmName || SetupStep.confirmPhone:
@@ -375,7 +375,7 @@ class _FallbackState extends State<_Fallback> {
       case SetupStep.name || SetupStep.district:
         final field = TextField(
           controller: _text,
-          style: const TextStyle(fontSize: 19),
+          style: const TextStyle(fontSize: 16),
           textInputAction: TextInputAction.done,
           onSubmitted: cubit.answer,
           decoration: InputDecoration(
@@ -395,13 +395,13 @@ class _FallbackState extends State<_Fallback> {
           children: [
             FilledButton.tonalIcon(
               style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(56),
+                minimumSize: const Size.fromHeight(50),
               ),
               onPressed: () => _pickDistrict(context, cubit),
               icon: const Icon(Icons.list_alt_rounded),
               label: const Text(
                 'তালিকা থেকে জেলা বেছে নিন',
-                style: TextStyle(fontSize: 18),
+                style: TextStyle(fontSize: 15),
               ),
             ),
             const SizedBox(height: 12),
@@ -412,7 +412,7 @@ class _FallbackState extends State<_Fallback> {
         return TextField(
           controller: _text,
           keyboardType: TextInputType.phone,
-          style: const TextStyle(fontSize: 20, letterSpacing: 1.5),
+          style: const TextStyle(fontSize: 17, letterSpacing: 1.5),
           onSubmitted: cubit.answer,
           decoration: InputDecoration(
             hintText: 'অথবা নম্বর লিখুন',
@@ -427,7 +427,7 @@ class _FallbackState extends State<_Fallback> {
           controller: _text,
           obscureText: _hidden,
           keyboardType: TextInputType.visiblePassword,
-          style: const TextStyle(fontSize: 20),
+          style: const TextStyle(fontSize: 17),
           onSubmitted: cubit.answer,
           decoration: InputDecoration(
             hintText: 'অথবা পাসওয়ার্ড লিখুন',
