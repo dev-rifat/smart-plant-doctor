@@ -45,7 +45,7 @@ class LocalCommandResponder implements VoiceResponder {
   }
 
   static const greeting =
-      'আসসালামু আলাইকুম! কৃষিসাথী AI-তে আপনাকে স্বাগতম। '
+      'আসসালামু আলাইকুম! স্মার্ট কৃষিতে আপনাকে স্বাগতম। '
       'বলুন, আপনার কী সাহায্য দরকার?';
 
   static bool _isDiseaseCheck(String t, bool Function(List<String>) has) {

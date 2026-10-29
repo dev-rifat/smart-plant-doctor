@@ -126,7 +126,7 @@ class OnboardingCubit extends Cubit<OnboardingState> {
   bool _toldFix = false;
 
   static const welcome =
-      'আসসালামু আলাইকুম! কৃষিসাথীতে আপনাকে স্বাগতম। চলুন আপনার অ্যাকাউন্ট '
+      'আসসালামু আলাইকুম! স্মার্ট কৃষিতে আপনাকে স্বাগতম। চলুন আপনার অ্যাকাউন্ট '
       'খুলি। প্রথমে আপনার নাম বলুন।';
 
   static const voiceFixMessage =

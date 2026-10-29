@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:plant_health/core/theme/app_colors.dart';
 
-/// The assistant's question as a speech bubble from "কৃষিসাথী", so it
+/// The assistant's question as a speech bubble from "Smart Krishi", so it
 /// reads like a person talking, not a form.
 class AssistantSays extends StatelessWidget {
   const AssistantSays(this.text, {super.key});

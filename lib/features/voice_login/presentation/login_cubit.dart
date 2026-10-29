@@ -72,7 +72,7 @@ class LoginCubit extends Cubit<LoginState> {
   int _turn = 0;
   String? _name;
 
-  static const greeting = 'আসসালামু আলাইকুম! কৃষিসাথীতে আবার স্বাগতম।';
+  static const greeting = 'আসসালামু আলাইকুম! স্মার্ট কৃষিতে আবার স্বাগতম।';
 
   /// The farmer's name, once logged in.
   String? get name => _name;

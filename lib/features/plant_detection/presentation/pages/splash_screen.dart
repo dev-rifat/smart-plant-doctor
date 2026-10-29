@@ -130,7 +130,7 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                     SizedBox(height: 6),
                     Text(
-                      'আপনার ফসলের খোঁজ নিতে কৃষিসাথী আসছে…',
+                      'আপনার ফসলের খোঁজ নিতে স্মার্ট কৃষি আসছে…',
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 17, color: Color(0xE6E8F5E9)),
                     ),
@@ -160,7 +160,7 @@ class _HeaderSection extends StatelessWidget {
             _LogoBox(),
             SizedBox(width: 10),
             Text(
-              'কৃষিসাথী',
+              'Smart Krishi',
               style: TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.w800,

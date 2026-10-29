@@ -1,13 +1,13 @@
-# কৃষিসাথী AI — প্রি-ডিফেন্স ডেমো গাইড
+# Smart Krishi AI — প্রি-ডিফেন্স ডেমো গাইড
 
 ## ডেমোর আগের দিন (ফোন প্রস্তুত)
 
-1. **অ্যাপ install:** `demo/KrishiSathi-universal.apk` যেকোনো Android ফোনে (৩২/৬৪-bit, Android 7+) চলে — ফোনে কপি করে খুলুন → Install।
-   USB লাগানো থাকলে: `adb install -r demo/KrishiSathi-universal.apk`
+1. **অ্যাপ install:** `demo/SmartKrishi.apk` যেকোনো Android ফোনে (৩২/৬৪-bit, Android 7+) চলে — ফোনে কপি করে খুলুন → Install।
+   USB লাগানো থাকলে: `adb install -r demo/SmartKrishi.apk`
 2. **বাংলা কথা বোঝা:** ফোনে বাংলা speech recognition না থাকলে (যেমন Redmi Note 12-এ) অ্যাপ নিজেই হলুদ নোটে জানায় — তখন লিখে, বোতাম চেপে ও জেলার তালিকা থেকে বেছে ডেমো দিন। অন্য Android ফোনে (Pixel/Samsung) সাধারণত কথা বোঝে — আগে পরীক্ষা করে নিন।
 3. **বাংলা কণ্ঠ:** Settings → Text-to-speech → Google → Install voice data → **বাংলা (বাংলাদেশ)** ডাউনলোড।
 4. **ডেমো ছবি গ্যালারিতে:** `demo/photos/` ফোল্ডারের ১০টি ছবি ফোনে কপি করুন।
-   USB দিয়ে: `adb push demo/photos/. /sdcard/Pictures/KrishiSathi/`
+   USB দিয়ে: `adb push demo/photos/. /sdcard/Pictures/SmartKrishi/`
 5. **ইন্টারনেট চালু রাখুন** (কথা বোঝা ও আবহাওয়ার জন্য)। রোগ পরীক্ষা ইন্টারনেট ছাড়াই চলে।
 6. **একবার পুরো ডেমো চালিয়ে দেখুন।** নতুন করে শুরু দেখাতে: "আমার তথ্য" → "নতুন করে শুরু করুন"।
 7. চার্জ ১০০%, ফোনের আওয়াজ বাড়ানো, "Do not disturb" চালু।

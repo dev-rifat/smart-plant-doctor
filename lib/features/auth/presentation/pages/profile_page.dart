@@ -173,7 +173,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 future: _packageInfoFuture,
                                 builder: (context, snapshot) => Text(
                                   snapshot.hasData
-                                      ? 'কৃষিসাথী সংস্করণ ${snapshot.data!.version}'
+                                      ? 'Smart Krishi সংস্করণ ${snapshot.data!.version}'
                                       : '',
                                   textAlign: TextAlign.center,
                                   style: Theme.of(context).textTheme.bodySmall,

@@ -7,7 +7,7 @@ import 'package:plant_health/core/theme/app_colors.dart';
 import 'package:plant_health/features/voice_assistant/data/local_command_responder.dart';
 import 'package:plant_health/features/voice_assistant/presentation/cubit/voice_assistant_cubit.dart';
 
-/// Home-screen assistant, shown as a conversation with "কৃষিসাথী": what the
+/// Home-screen assistant, shown as a conversation with "Smart Krishi": what the
 /// farmer said on the right, the answer on the left, one big living mic.
 ///
 /// Every spoken answer is also shown as text, and every voice action has a
