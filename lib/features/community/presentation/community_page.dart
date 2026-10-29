@@ -4,9 +4,8 @@ import 'package:plant_health/features/home/presentation/pages/rice_tips_page.dar
 import 'package:plant_health/features/voice_assistant/presentation/voice_guide.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// Where a farmer gets help from people. Today that is the government
-/// agriculture call centre and the rice tips; farmer-to-farmer questions
-/// need a moderated server and are shown as coming, not faked.
+/// Where a farmer gets help from people: the government agriculture call
+/// centre, and the rice tips.
 class CommunityPage extends StatelessWidget {
   const CommunityPage({super.key});
 
@@ -58,19 +57,6 @@ class CommunityPage extends StatelessWidget {
                 rootNavigator: true,
               ).push(MaterialPageRoute(builder: (_) => const RiceTipsPage())),
               child: const Text('পরামর্শ দেখুন'),
-            ),
-          ),
-          const SizedBox(height: 12),
-          const _Card(
-            icon: Icons.forum_rounded,
-            color: Color(0xFF8E24AA),
-            title: 'কৃষকের প্রশ্নোত্তর',
-            body:
-                'ছবিসহ প্রশ্ন করে অন্য কৃষক ও বিশেষজ্ঞের উত্তর পাবেন। '
-                'এই সুবিধা শীঘ্রই আসছে।',
-            action: Chip(
-              avatar: Icon(Icons.schedule_rounded, size: 16),
-              label: Text('শীঘ্রই আসছে'),
             ),
           ),
         ],

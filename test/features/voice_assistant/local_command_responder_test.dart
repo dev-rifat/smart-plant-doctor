@@ -98,7 +98,9 @@ void main() {
   });
 
   test('shopping and profile open their screens', () async {
-    expect((await ask('কীটনাশক কিনতে চাই')).action, VoiceAction.openProducts);
+    final shop = await ask('কীটনাশক কিনতে চাই');
+    expect(shop.action, isNull);
+    expect(shop.text, contains('১৬১২৩'));
     expect((await ask('আমার তথ্য দেখাও')).action, VoiceAction.openProfile);
   });
 

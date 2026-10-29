@@ -3,16 +3,7 @@ import 'package:plant_health/core/di/injection.dart';
 import 'package:plant_health/core/services/voice_output_service.dart';
 
 /// Screens the guide knows how to explain.
-enum GuideScreen {
-  login,
-  signup,
-  home,
-  community,
-  advice,
-  diagnosis,
-  products,
-  profile,
-}
+enum GuideScreen { login, signup, home, community, advice, diagnosis, profile }
 
 /// Speaks a short "what to do here" line when a screen opens, so a farmer
 /// who can't read the screen still knows the next step.
@@ -67,9 +58,6 @@ class VoiceGuide {
       'ধানের রোগ পরীক্ষা। "ছবি তুলুন" বোতাম চাপুন। '
           'দিনের আলোয়, কাছ থেকে, আক্রান্ত একটি পাতার ছবি তুলুন। '
           'আগে তোলা ছবি দিতে "গ্যালারি থেকে নিন" চাপুন।',
-    GuideScreen.products =>
-      'কৃষি পণ্যের বাজার। পণ্য খুঁজতে উপরে লিখুন বা মাইকে বলুন। '
-          'পণ্যের পাশে "যোগ" চাপলে কার্টে যোগ হবে।',
     GuideScreen.profile => 'এখানে আপনার তথ্য আছে। বের হতে চাইলে "লগআউট" চাপুন।',
   };
 }

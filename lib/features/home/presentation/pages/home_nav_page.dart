@@ -7,11 +7,9 @@ import 'package:plant_health/core/resources/strings.dart';
 import 'package:plant_health/core/services/voice_input_service.dart';
 import 'package:plant_health/core/services/voice_output_service.dart';
 import 'package:plant_health/core/theme/app_colors.dart';
-import 'package:plant_health/features/agro_products/presentation/pages/agro_products_page.dart';
 import 'package:plant_health/features/auth/presentation/pages/profile_page.dart';
 import 'package:plant_health/features/community/presentation/community_page.dart';
 import 'package:plant_health/features/home/domain/spray_advice.dart';
-import 'package:plant_health/features/home/presentation/pages/rice_tips_page.dart';
 import 'package:plant_health/features/home/presentation/widgets/home_greeting.dart';
 import 'package:plant_health/features/onboarding/data/farmer_profile_repository.dart';
 import 'package:plant_health/features/rice_diagnosis/presentation/pages/rice_diagnosis_page.dart';
@@ -23,7 +21,7 @@ import 'package:plant_health/features/voice_assistant/presentation/widgets/voice
 import 'package:plant_health/services/weather_service.dart';
 
 /// Three tabs: the farmer's crop (home), community help, and their profile.
-/// Disease check, tips, market and weather open as pages from the home tab.
+/// Disease check and weather details open as pages from the home tab.
 class HomeNavPage extends StatefulWidget {
   const HomeNavPage({super.key});
 
@@ -87,8 +85,6 @@ class _HomeNavPageState extends State<HomeNavPage> {
     switch (action) {
       case VoiceAction.openDiseaseCheck:
         _push(const RiceDiagnosisPage(), GuideScreen.diagnosis);
-      case VoiceAction.openProducts:
-        _push(const AgroProductsPage(), GuideScreen.products);
       case VoiceAction.openProfile:
         _select(2);
     }
@@ -119,48 +115,55 @@ class _HomeNavPageState extends State<HomeNavPage> {
   Widget build(BuildContext context) {
     return BlocProvider.value(
       value: _voice,
-      child: Scaffold(
-        body: IndexedStack(
-          index: _tab,
-          children: [
-            _CropHomeTab(open: _push),
-            const CommunityPage(),
-            const ProfilePage(),
-          ],
-        ),
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: _tab,
-          onDestinationSelected: _select,
-          height: 68,
-          backgroundColor: Colors.white,
-          indicatorColor: AppColors.leafSoft,
-          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.spa_outlined),
-              selectedIcon: Icon(
-                Icons.spa_rounded,
-                color: AppColors.primaryDark,
+      // Back on another tab returns to the crop tab before leaving the app.
+      child: PopScope(
+        canPop: _tab == 0,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) _select(0);
+        },
+        child: Scaffold(
+          body: IndexedStack(
+            index: _tab,
+            children: [
+              _CropHomeTab(open: _push),
+              const CommunityPage(),
+              const ProfilePage(),
+            ],
+          ),
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: _tab,
+            onDestinationSelected: _select,
+            height: 68,
+            backgroundColor: Colors.white,
+            indicatorColor: AppColors.leafSoft,
+            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+            destinations: const [
+              NavigationDestination(
+                icon: Icon(Icons.spa_outlined),
+                selectedIcon: Icon(
+                  Icons.spa_rounded,
+                  color: AppColors.primaryDark,
+                ),
+                label: 'আপনার ফসল',
               ),
-              label: 'আপনার ফসল',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.forum_outlined),
-              selectedIcon: Icon(
-                Icons.forum_rounded,
-                color: AppColors.primaryDark,
+              NavigationDestination(
+                icon: Icon(Icons.forum_outlined),
+                selectedIcon: Icon(
+                  Icons.forum_rounded,
+                  color: AppColors.primaryDark,
+                ),
+                label: 'কমিউনিটি',
               ),
-              label: 'কমিউনিটি',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.account_circle_outlined),
-              selectedIcon: Icon(
-                Icons.account_circle_rounded,
-                color: AppColors.primaryDark,
+              NavigationDestination(
+                icon: Icon(Icons.account_circle_outlined),
+                selectedIcon: Icon(
+                  Icons.account_circle_rounded,
+                  color: AppColors.primaryDark,
+                ),
+                label: 'আপনি',
               ),
-              label: 'আপনি',
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -277,38 +280,7 @@ class _CropHomeTabState extends State<_CropHomeTab> {
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: VoiceAssistantPanel(),
             ),
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
-              child: _SectionTitle('টুলস'),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-              child: Row(
-                children: [
-                  _Tool(
-                    icon: Icons.menu_book_rounded,
-                    label: 'চাষের\nপরামর্শ',
-                    onTap: () =>
-                        widget.open(const RiceTipsPage(), GuideScreen.advice),
-                  ),
-                  const SizedBox(width: 10),
-                  _Tool(
-                    icon: Icons.storefront_rounded,
-                    label: 'কৃষি\nবাজার',
-                    onTap: () => widget.open(
-                      const AgroProductsPage(),
-                      GuideScreen.products,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  _Tool(
-                    icon: Icons.cloud_outlined,
-                    label: 'বিস্তারিত\nআবহাওয়া',
-                    onTap: _openWeather,
-                  ),
-                ],
-              ),
-            ),
+            const SizedBox(height: 24),
           ],
         ),
       ),
@@ -342,8 +314,7 @@ class _SectionTitle extends StatelessWidget {
   );
 }
 
-/// The farmer's crops. Only rice is supported today; more come with the
-/// models for them.
+/// The farmer's crop. Only rice is supported today.
 class _CropRow extends StatelessWidget {
   const _CropRow();
 
@@ -366,35 +337,6 @@ class _CropRow extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             const Text('ধান', style: TextStyle(fontSize: 13)),
-          ],
-        ),
-        const SizedBox(width: 14),
-        Column(
-          children: [
-            Material(
-              color: const Color(0xFFF1F3F1),
-              shape: const CircleBorder(),
-              child: InkWell(
-                customBorder: const CircleBorder(),
-                onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'এখন শুধু ধানের রোগ চেনা যায়। আরও ফসল আসছে।',
-                    ),
-                  ),
-                ),
-                child: const SizedBox(
-                  width: 64,
-                  height: 64,
-                  child: Icon(Icons.add_rounded, color: Colors.black45),
-                ),
-              ),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'আরও ফসল',
-              style: TextStyle(fontSize: 13, color: Colors.black54),
-            ),
           ],
         ),
       ],
@@ -679,54 +621,6 @@ class _Arrow extends StatelessWidget {
     padding: EdgeInsets.only(bottom: 30),
     child: Icon(Icons.chevron_right_rounded, color: Colors.black38),
   );
-}
-
-class _Tool extends StatelessWidget {
-  const _Tool({required this.icon, required this.label, required this.onTap});
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE3E8E4)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: AppColors.leafSoft,
-                  child: Icon(icon, color: AppColors.primaryDark, size: 20),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    height: 1.3,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class _WeatherUpdateCard extends StatelessWidget {

@@ -33,12 +33,7 @@ class LocalCommandResponder implements VoiceResponder {
     }
     if (has(_weatherWords)) return VoiceReply(await _weatherAnswer());
     if (has(_news)) return const VoiceReply(_newsNotReady);
-    if (has(_shopping)) {
-      return const VoiceReply(
-        'কৃষি পণ্যের বাজার খুলছি।',
-        action: VoiceAction.openProducts,
-      );
-    }
+    if (has(_shopping)) return const VoiceReply(_shoppingNotHere);
     if (has(_profile)) {
       return const VoiceReply(
         'আপনার তথ্য খুলছি।',
@@ -106,6 +101,10 @@ class LocalCommandResponder implements VoiceResponder {
     'bristi',
   ];
   static const _news = ['খবর', 'সংবাদ', 'ব্লগ', 'লেখা পড়ে'];
+  static const _shoppingNotHere =
+      'এই অ্যাপে কেনাকাটা নেই। সার বা ওষুধ কেনার আগে কৃষি কর্মকর্তা বা '
+      '১৬১২৩ নম্বরে পরামর্শ নিন।';
+
   static const _shopping = [
     'বাজার',
     'কিনব',

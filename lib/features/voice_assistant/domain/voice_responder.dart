@@ -1,5 +1,5 @@
 /// Screens a voice command can open. The UI decides how to get there.
-enum VoiceAction { openDiseaseCheck, openProducts, openProfile }
+enum VoiceAction { openDiseaseCheck, openProfile }
 
 class VoiceReply {
   const VoiceReply(this.text, {this.action});
